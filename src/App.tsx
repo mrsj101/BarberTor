@@ -15,6 +15,7 @@ import AdminLayout from "./components/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import CalendarPage from "./pages/admin/CalendarPage";
 import RequestsPage from "./pages/admin/RequestsPage";
+import AppointmentsManagementPage from "./pages/admin/AppointmentsManagementPage";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="calendar" element={<CalendarPage />} />
               <Route path="requests" element={<RequestsPage />} />
+              <Route path="appointments" element={<AppointmentsManagementPage />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Calendar, Mail, Menu, X, LogOut } from "lucide-react";
+import { LayoutDashboard, Calendar, Mail, Menu, X, LogOut, ListTodo } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/contexts/SessionContext";
@@ -9,6 +9,7 @@ const navItems = [
   { href: "/admin/dashboard", label: "דשבורד", icon: LayoutDashboard },
   { href: "/admin/calendar", label: "יומן", icon: Calendar },
   { href: "/admin/requests", label: "בקשות", icon: Mail },
+  { href: "/admin/appointments", label: "ניהול תורים", icon: ListTodo },
 ];
 
 const AdminLayout = () => {
