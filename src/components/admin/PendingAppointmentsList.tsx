@@ -32,7 +32,7 @@ export const PendingAppointmentsList = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>בקשות ממתינות לאישור</CardTitle>
+        <CardTitle>הזמנות ממתינות לאישור</CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -43,7 +43,7 @@ export const PendingAppointmentsList = () => {
           </div>
         ) : appointments.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
-            אין בקשות חדשות הממתינות לאישור.
+            אין הזמנות חדשות הממתינות לאישור.
           </div>
         ) : (
           <div className="space-y-4">

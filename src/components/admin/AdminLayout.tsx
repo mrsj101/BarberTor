@@ -8,7 +8,7 @@ import { useSession } from "@/contexts/SessionContext";
 const navItems = [
   { href: "/admin/dashboard", label: "דשבורד", icon: LayoutDashboard },
   { href: "/admin/calendar", label: "יומן", icon: Calendar },
-  { href: "/admin/requests", label: "בקשות", icon: Mail },
+  { href: "/admin/requests", label: "הזמנות תור", icon: Mail },
   { href: "/admin/appointments", label: "ניהול תורים", icon: ListTodo },
 ];
 
