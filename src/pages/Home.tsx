@@ -15,10 +15,32 @@ const Home = () => {
     }
   }, [session, loading, navigate]);
 
-  if (loading || !profile) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p>טוען...</p>
+      </div>
+    );
+  }
+
+  if (!session) {
+    // This case is handled by the useEffect, but as a fallback
+    return null;
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+        <h2 className="text-2xl font-bold mb-4">שגיאה בטעינת הפרופיל</h2>
+        <p className="text-muted-foreground mb-6">
+          לא הצלחנו לטעון את פרטי המשתמש שלך. ייתכן שיש בעיה בחיבור או שהחשבון שלך לא הוגדר כראוי.
+        </p>
+        <Button onClick={async () => {
+          await logout();
+          navigate('/login');
+        }} variant="destructive">
+          התנתק ונסה להתחבר שוב
+        </Button>
       </div>
     );
   }
