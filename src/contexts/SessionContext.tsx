@@ -32,36 +32,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setSession(session);
-      if (session?.user) {
-        await fetchProfile(session.user.id);
-      }
-      setLoading(false);
-    };
-
-    getSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      if (session?.user) {
-        await fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
@@ -69,18 +39,44 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       .eq("id", userId)
       .single();
 
-    if (error) {
-      console.error("Error fetching profile:", error);
-    }
-    if (data) {
+    if (error || !data) {
+      console.error("Error fetching profile or profile not found:", error);
+      setProfile(null);
+    } else {
       setProfile(data);
     }
   };
 
+  useEffect(() => {
+    setLoading(true);
+    
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        await fetchProfile(session.user.id);
+      }
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setSession(session);
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        } else {
+          setProfile(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   const logout = async () => {
     await supabase.auth.signOut();
-    setSession(null);
-    setProfile(null);
   };
 
   const value = {
