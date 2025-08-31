@@ -1,33 +1,30 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfWeek, endOfWeek, addDays, subDays, format, eachDayOfInterval } from "date-fns";
-import { he } from "date-fns/locale";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AppointmentCard, Appointment } from "@/components/admin/AppointmentCard";
+import { startOfMonth, endOfMonth, addMonths, subMonths, format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Appointment } from "@/components/admin/AppointmentCard";
 import { CalendarToolbar } from "@/components/admin/CalendarToolbar";
+import { DailyAppointmentsList } from "@/components/admin/DailyAppointmentsList";
 
 const AdminDashboard = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  const weekInterval = useMemo(() => {
-    const start = startOfWeek(currentDate, { weekStartsOn: 0 }); // Sunday
-    const end = endOfWeek(currentDate, { weekStartsOn: 0 }); // Saturday
+  const monthInterval = useMemo(() => {
+    const start = startOfMonth(currentMonth);
+    const end = endOfMonth(currentMonth);
     return { start, end };
-  }, [currentDate]);
-
-  const weekDays = useMemo(() => {
-    return eachDayOfInterval(weekInterval);
-  }, [weekInterval]);
+  }, [currentMonth]);
 
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("appointments")
       .select("id, start_time, end_time, status, profiles(first_name), services(name)")
-      .gte("start_time", weekInterval.start.toISOString())
-      .lte("start_time", weekInterval.end.toISOString())
+      .gte("start_time", monthInterval.start.toISOString())
+      .lte("start_time", monthInterval.end.toISOString())
       .order("start_time", { ascending: true });
 
     if (error) {
@@ -37,60 +34,53 @@ const AdminDashboard = () => {
       setAppointments(data as unknown as Appointment[]);
     }
     setLoading(false);
-  }, [weekInterval]);
+  }, [monthInterval]);
 
   useEffect(() => {
     fetchAppointments();
   }, [fetchAppointments]);
 
-  const appointmentsByDay = useMemo(() => {
-    const grouped: { [key: string]: Appointment[] } = {};
-    weekDays.forEach(day => {
-      grouped[format(day, 'yyyy-MM-dd')] = [];
-    });
-    appointments.forEach(app => {
-      const dayKey = format(new Date(app.start_time), 'yyyy-MM-dd');
-      if (grouped[dayKey]) {
-        grouped[dayKey].push(app);
-      }
-    });
-    return grouped;
-  }, [appointments, weekDays]);
+  const appointmentsForSelectedDay = useMemo(() => {
+    if (!selectedDate) return [];
+    return appointments.filter(app => 
+      format(new Date(app.start_time), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
+    );
+  }, [appointments, selectedDate]);
 
-  const handlePrevWeek = () => setCurrentDate(prev => subDays(prev, 7));
-  const handleNextWeek = () => setCurrentDate(prev => addDays(prev, 7));
-  const handleToday = () => setCurrentDate(new Date());
+  const handlePrevMonth = () => setCurrentMonth(prev => subMonths(prev, 1));
+  const handleNextMonth = () => setCurrentMonth(prev => addMonths(prev, 1));
+  const handleToday = () => {
+    setCurrentMonth(new Date());
+    setSelectedDate(new Date());
+  };
 
   return (
     <div className="space-y-6">
       <CalendarToolbar 
-        currentDate={currentDate}
-        onPrevWeek={handlePrevWeek}
-        onNextWeek={handleNextWeek}
+        currentDate={currentMonth}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
         onToday={handleToday}
       />
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
-        {weekDays.map(day => (
-          <div key={day.toString()} className="bg-card rounded-lg p-4 border min-h-[200px]">
-            <h3 className="font-bold text-center mb-1">
-              {format(day, 'EEEE', { locale: he })}
-            </h3>
-            <p className="text-sm text-muted-foreground text-center mb-4">
-              {format(day, 'd MMM', { locale: he })}
-            </p>
-            <div className="space-y-2">
-              {loading ? (
-                <Skeleton className="h-24 w-full" />
-              ) : appointmentsByDay[format(day, 'yyyy-MM-dd')].length > 0 ? (
-                appointmentsByDay[format(day, 'yyyy-MM-dd')].map(app => (
-                  <AppointmentCard key={app.id} appointment={app} onUpdate={fetchAppointments} />
-                ))
-              ) : (
-                <div className="text-center text-muted-foreground pt-8 text-sm">אין תורים</div>
-              )}
-            </div>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-1 flex justify-center">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            month={currentMonth}
+            onMonthChange={setCurrentMonth}
+            className="rounded-md border"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <DailyAppointmentsList
+            date={selectedDate}
+            appointments={appointmentsForSelectedDay}
+            isLoading={loading}
+            onUpdate={fetchAppointments}
+          />
+        </div>
       </div>
     </div>
   );

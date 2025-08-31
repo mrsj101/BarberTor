@@ -60,7 +60,7 @@ export const AppointmentCard = ({ appointment, onUpdate }: Props) => {
             })}
           </span>
         </div>
-        {appointment.status === 'pending' && (
+        {(appointment.status === 'pending' || appointment.status === 'approved') && (
           <div className="pt-3 border-t border-border/50">
             <AppointmentActions
               appointmentId={appointment.id}

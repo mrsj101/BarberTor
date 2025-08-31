@@ -9,7 +9,7 @@ type Props = {
 };
 
 export const AppointmentActions = ({ appointmentId, currentStatus, onUpdate }: Props) => {
-  const handleUpdateStatus = async (newStatus: "approved" | "rejected") => {
+  const handleUpdateStatus = async (newStatus: "approved" | "rejected" | "cancelled") => {
     const { error } = await supabase
       .from("appointments")
       .update({ status: newStatus })
@@ -18,7 +18,11 @@ export const AppointmentActions = ({ appointmentId, currentStatus, onUpdate }: P
     if (error) {
       showError(`שגיאה בעדכון הסטטוס: ${error.message}`);
     } else {
-      showSuccess(`התור ${newStatus === 'approved' ? 'אושר' : 'נדחה'} בהצלחה`);
+      let successMessage = "הסטטוס עודכן בהצלחה";
+      if (newStatus === 'approved') successMessage = "התור אושר בהצלחה";
+      if (newStatus === 'rejected') successMessage = "התור נדחה בהצלחה";
+      if (newStatus === 'cancelled') successMessage = "התור בוטל בהצלחה";
+      showSuccess(successMessage);
       onUpdate(); // Refresh the appointments list
     }
   };
@@ -40,5 +44,23 @@ export const AppointmentActions = ({ appointmentId, currentStatus, onUpdate }: P
     );
   }
 
-  return null; // No actions for already approved/rejected/cancelled appointments
+  if (currentStatus === "approved") {
+    return (
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => handleUpdateStatus("cancelled")}
+        >
+          ביטול תור
+        </Button>
+        {/* Placeholder for Reschedule */}
+        <Button size="sm" variant="outline" disabled>
+          שינוי מועד
+        </Button>
+      </div>
+    );
+  }
+
+  return null; // No actions for rejected/cancelled appointments
 };
