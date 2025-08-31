@@ -5,11 +5,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Appointment } from "@/components/admin/AppointmentCard";
 import { CalendarToolbar } from "@/components/admin/CalendarToolbar";
 import { DailyAppointmentsList } from "@/components/admin/DailyAppointmentsList";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PendingAppointmentsList } from "@/components/admin/PendingAppointmentsList";
 import type { DayContentProps } from "react-day-picker";
 
-const AdminDashboard = () => {
+const CalendarPage = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -84,47 +82,36 @@ const AdminDashboard = () => {
   };
 
   return (
-    <Tabs defaultValue="requests" className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="requests">בקשות ממתינות</TabsTrigger>
-        <TabsTrigger value="calendar">יומן</TabsTrigger>
-      </TabsList>
-      <TabsContent value="requests" className="mt-6">
-        <PendingAppointmentsList />
-      </TabsContent>
-      <TabsContent value="calendar" className="mt-6">
-        <div className="space-y-6">
-          <CalendarToolbar 
-            currentDate={currentMonth}
-            onPrevMonth={handlePrevMonth}
-            onNextMonth={handleNextMonth}
-            onToday={handleToday}
+    <div className="space-y-6">
+      <CalendarToolbar 
+        currentDate={currentMonth}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
+        onToday={handleToday}
+      />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-1 flex justify-center">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            month={currentMonth}
+            onMonthChange={setCurrentMonth}
+            className="rounded-md border"
+            components={{ DayContent: CustomDayContent }}
           />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-1 flex justify-center">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                month={currentMonth}
-                onMonthChange={setCurrentMonth}
-                className="rounded-md border"
-                components={{ DayContent: CustomDayContent }}
-              />
-            </div>
-            <div className="md:col-span-2">
-              <DailyAppointmentsList
-                date={selectedDate}
-                appointments={appointmentsForSelectedDay}
-                isLoading={loading}
-                onUpdate={fetchAppointments}
-              />
-            </div>
-          </div>
         </div>
-      </TabsContent>
-    </Tabs>
+        <div className="md:col-span-2">
+          <DailyAppointmentsList
+            date={selectedDate}
+            appointments={appointmentsForSelectedDay}
+            isLoading={loading}
+            onUpdate={fetchAppointments}
+          />
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default AdminDashboard;
+export default CalendarPage;
