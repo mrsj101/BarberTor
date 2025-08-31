@@ -42,8 +42,8 @@ const Home = () => {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <header className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">שלום, {profile.first_name}</h1>
+      <header className="flex flex-col items-center gap-4 mb-8 md:flex-row md:justify-between">
+        <h1 className="text-3xl font-bold text-center">שלום, {profile.first_name}</h1>
         <Button onClick={logout} variant="destructive">
           התנתקות
         </Button>

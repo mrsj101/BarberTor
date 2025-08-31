@@ -79,7 +79,8 @@ const AdminLayout = () => {
       <div className="flex-1 flex flex-col">
         {/* Mobile Header */}
         <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background px-4 md:hidden">
-          <h2 className="text-xl font-bold text-primary">ניהול</h2>
+          <div className="w-10" /> {/* Spacer */}
+          <h2 className="text-xl font-bold text-primary text-center">ניהול</h2>
           <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
             <Menu className="h-6 w-6" />
           </Button>

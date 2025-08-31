@@ -25,9 +25,9 @@ export const SocialLinks = () => {
   }, []);
 
   return (
-    <div className="text-center p-4 rounded-lg">
-      <h3 className="text-lg font-bold mb-4">עקבו אחרינו</h3>
-      <div className="flex justify-center gap-4">
+    <div className="p-4 rounded-lg">
+      <h3 className="text-lg font-bold mb-4 text-center md:text-right">עקבו אחרינו</h3>
+      <div className="flex justify-center md:justify-start gap-4">
         {settings.instagram_url && (
           <a href={settings.instagram_url} target="_blank" rel="noopener noreferrer">
             <Button variant="outline" size="icon"><Instagram /></Button>

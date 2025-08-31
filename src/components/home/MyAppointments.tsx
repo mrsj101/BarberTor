@@ -50,7 +50,7 @@ export const MyAppointments = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>התורים שלי</CardTitle>
+        <CardTitle className="text-center md:text-right">התורים שלי</CardTitle>
       </CardHeader>
       <CardContent>
         {loading && (

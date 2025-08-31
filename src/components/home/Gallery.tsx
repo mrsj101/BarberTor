@@ -7,7 +7,7 @@ export const Gallery = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>גלריית עבודות</CardTitle>
+        <CardTitle className="text-center md:text-right">גלריית עבודות</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
