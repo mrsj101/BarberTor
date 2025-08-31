@@ -33,15 +33,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // The onAuthStateChange listener is the single source of truth.
-    // It fires once immediately with the initial session state from localStorage,
-    // and then again whenever the auth state changes (login, logout).
+    // This is the single source of truth for authentication state.
+    // It fires once on initial load and again whenever the auth state changes.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
 
-      // If there's a user, fetch their profile. Otherwise, clear it.
       if (session?.user) {
         const { data: profileData } = await supabase
           .from("profiles")
@@ -53,20 +51,19 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         setProfile(null);
       }
 
-      // Crucially, once we have the initial auth state (even if it's null),
-      // we are no longer in a loading state.
+      // Once this initial check is done, we are no longer loading.
       setLoading(false);
     });
 
-    // Cleanup the subscription when the component unmounts
+    // Cleanup the subscription on component unmount
     return () => {
       subscription.unsubscribe();
     };
-  }, []); // The empty dependency array ensures this effect runs only once on mount.
+  }, []);
 
   const logout = async () => {
     await supabase.auth.signOut();
-    // onAuthStateChange will automatically handle clearing the session and profile state.
+    // onAuthStateChange will handle clearing the state automatically.
   };
 
   const value = {
