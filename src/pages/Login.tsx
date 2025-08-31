@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -65,15 +64,6 @@ const Login = () => {
                 placeholder="********"
                 autoComplete="current-password"
               />
-            </div>
-            <div className="flex items-center">
-              <Checkbox id="remember-me" />
-              <label
-                htmlFor="remember-me"
-                className="mr-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                זכור אותי
-              </label>
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
