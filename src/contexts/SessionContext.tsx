@@ -33,26 +33,34 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // This is the single source of truth for authentication state.
-    // It fires once on initial load and again whenever the auth state changes.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-
-      if (session?.user) {
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .single();
-        setProfile(profileData || null);
-      } else {
+      try {
+        setSession(session);
+        if (session?.user) {
+          const { data: profileData, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", session.user.id)
+            .single();
+          
+          if (error) {
+            console.error("Error fetching profile:", error);
+            setProfile(null);
+          } else {
+            setProfile(profileData || null);
+          }
+        } else {
+          setProfile(null);
+        }
+      } catch (e) {
+        console.error("An unexpected error occurred in onAuthStateChange:", e);
         setProfile(null);
+      } finally {
+        // This block ensures loading is always set to false, preventing infinite loops.
+        setLoading(false);
       }
-
-      // Once this initial check is done, we are no longer loading.
-      setLoading(false);
     });
 
     // Cleanup the subscription on component unmount
