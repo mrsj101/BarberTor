@@ -1,22 +1,23 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfWeek, endOfWeek, startOfDay, endOfDay, format } from "date-fns";
+import { startOfWeek, endOfWeek, startOfDay, endOfDay } from "date-fns";
 import { DashboardStatCard } from "@/components/admin/DashboardStatCard";
-import { PendingRequestsPreview } from "@/components/admin/PendingRequestsPreview";
+import { RecentRequestsPreview } from "@/components/admin/RecentRequestsPreview";
 import { TodaysAgenda } from "@/components/admin/TodaysAgenda";
-import { Users, CalendarCheck, Mail, Calendar as CalendarIcon } from "lucide-react";
+import { CalendarCheck, Mail, Calendar as CalendarIcon } from "lucide-react";
 
 type Appointment = {
   id: string;
   start_time: string;
-  status: string;
+  created_at: string;
+  status: "pending" | "approved" | "rejected" | "cancelled";
   profiles: { first_name: string | null } | null;
   services: { name: string | null } | null;
 };
 
 const Dashboard = () => {
   const [stats, setStats] = useState({ pending: 0, today: 0, week: 0 });
-  const [pendingAppointments, setPendingAppointments] = useState<Appointment[]>([]);
+  const [recentAppointments, setRecentAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,22 +30,25 @@ const Dashboard = () => {
       const weekStart = startOfWeek(now, { weekStartsOn: 0 }).toISOString(); // Sunday
       const weekEnd = endOfWeek(now, { weekStartsOn: 0 }).toISOString();
 
-      // Fetch all relevant appointments in one go
       const { data, error } = await supabase
         .from("appointments")
-        .select("id, start_time, status, profiles(first_name), services(name)")
-        .order("start_time", { ascending: true });
+        .select("id, start_time, created_at, status, profiles(first_name), services(name)")
+        .order("created_at", { ascending: false }); // Order by creation date to easily get recent ones
 
       if (error) {
         console.error("Error fetching dashboard data:", error);
       } else if (data) {
         const typedData = data as Appointment[];
+        
+        // Stats calculation
         const pending = typedData.filter(a => a.status === 'pending');
         const todays = typedData.filter(a => a.start_time >= todayStart && a.start_time <= todayEnd && a.status === 'approved');
         const week = typedData.filter(a => a.start_time >= weekStart && a.start_time <= weekEnd && a.status === 'approved');
-
+        
         setStats({ pending: pending.length, today: todays.length, week: week.length });
-        setPendingAppointments(pending);
+        
+        // Get 5 most recent appointments
+        setRecentAppointments(typedData.slice(0, 5));
       }
       setLoading(false);
     };
@@ -62,9 +66,9 @@ const Dashboard = () => {
         <DashboardStatCard title="תורים השבוע" value={stats.week} icon={CalendarCheck} isLoading={loading} />
       </div>
 
-      <div className="grid gap-8 md:grid-cols-3">
-        <div className="md:col-span-2">
-          <PendingRequestsPreview appointments={pendingAppointments} isLoading={loading} />
+      <div className="grid gap-8 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <RecentRequestsPreview appointments={recentAppointments} isLoading={loading} />
         </div>
         <div>
           <TodaysAgenda />
