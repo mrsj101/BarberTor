@@ -1,118 +1,98 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { startOfWeek, endOfWeek, addDays, subDays, format, eachDayOfInterval } from "date-fns";
+import { he } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppointmentActions } from "@/components/admin/AppointmentActions";
-
-type Appointment = {
-  id: string;
-  start_time: string;
-  status: "pending" | "approved" | "rejected" | "cancelled";
-  profiles: { first_name: string } | null;
-  services: { name: string } | null;
-};
-
-const statusMap: { [key: string]: { text: string; variant: "default" | "secondary" | "destructive" | "outline" } } = {
-  pending: { text: "ממתין לאישור", variant: "default" },
-  approved: { text: "אושר", variant: "secondary" },
-  rejected: { text: "נדחה", variant: "destructive" },
-  cancelled: { text: "בוטל", variant: "destructive" },
-};
-
+import { AppointmentCard, Appointment } from "@/components/admin/AppointmentCard";
+import { CalendarToolbar } from "@/components/admin/CalendarToolbar";
 
 const AdminDashboard = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const weekInterval = useMemo(() => {
+    const start = startOfWeek(currentDate, { weekStartsOn: 0 }); // Sunday
+    const end = endOfWeek(currentDate, { weekStartsOn: 0 }); // Saturday
+    return { start, end };
+  }, [currentDate]);
+
+  const weekDays = useMemo(() => {
+    return eachDayOfInterval(weekInterval);
+  }, [weekInterval]);
 
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("appointments")
-      .select("id, start_time, status, profiles(first_name), services(name)")
+      .select("id, start_time, end_time, status, profiles(first_name), services(name)")
+      .gte("start_time", weekInterval.start.toISOString())
+      .lte("start_time", weekInterval.end.toISOString())
       .order("start_time", { ascending: true });
 
     if (error) {
       console.error("Error fetching appointments:", error);
+      setAppointments([]);
     } else if (data) {
       setAppointments(data as Appointment[]);
     }
     setLoading(false);
-  }, []);
+  }, [weekInterval]);
 
   useEffect(() => {
     fetchAppointments();
   }, [fetchAppointments]);
 
+  const appointmentsByDay = useMemo(() => {
+    const grouped: { [key: string]: Appointment[] } = {};
+    weekDays.forEach(day => {
+      grouped[format(day, 'yyyy-MM-dd')] = [];
+    });
+    appointments.forEach(app => {
+      const dayKey = format(new Date(app.start_time), 'yyyy-MM-dd');
+      if (grouped[dayKey]) {
+        grouped[dayKey].push(app);
+      }
+    });
+    return grouped;
+  }, [appointments, weekDays]);
+
+  const handlePrevWeek = () => setCurrentDate(prev => subDays(prev, 7));
+  const handleNextWeek = () => setCurrentDate(prev => addDays(prev, 7));
+  const handleToday = () => setCurrentDate(new Date());
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>ניהול תורים</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>לקוח</TableHead>
-              <TableHead>שירות</TableHead>
-              <TableHead>תאריך ושעה</TableHead>
-              <TableHead>סטטוס</TableHead>
-              <TableHead>פעולות</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading &&
-              Array.from({ length: 3 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell colSpan={5}>
-                    <Skeleton className="h-8 w-full" />
-                  </TableCell>
-                </TableRow>
-              ))}
-            {!loading && appointments.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center">
-                  לא נמצאו תורים.
-                </TableCell>
-              </TableRow>
-            )}
-            {!loading &&
-              appointments.map((app) => (
-                <TableRow key={app.id}>
-                  <TableCell>{app.profiles?.first_name || "N/A"}</TableCell>
-                  <TableCell>{app.services?.name || "N/A"}</TableCell>
-                  <TableCell>
-                    {new Date(app.start_time).toLocaleString("he-IL", {
-                      dateStyle: "short",
-                      timeStyle: "short",
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={statusMap[app.status]?.variant || "default"}>
-                      {statusMap[app.status]?.text || app.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <AppointmentActions
-                      appointmentId={app.id}
-                      currentStatus={app.status}
-                      onUpdate={fetchAppointments}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <CalendarToolbar 
+        currentDate={currentDate}
+        onPrevWeek={handlePrevWeek}
+        onNextWeek={handleNextWeek}
+        onToday={handleToday}
+      />
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
+        {weekDays.map(day => (
+          <div key={day.toString()} className="bg-card rounded-lg p-4 border min-h-[200px]">
+            <h3 className="font-bold text-center mb-1">
+              {format(day, 'EEEE', { locale: he })}
+            </h3>
+            <p className="text-sm text-muted-foreground text-center mb-4">
+              {format(day, 'd MMM', { locale: he })}
+            </p>
+            <div className="space-y-2">
+              {loading ? (
+                <Skeleton className="h-24 w-full" />
+              ) : appointmentsByDay[format(day, 'yyyy-MM-dd')].length > 0 ? (
+                appointmentsByDay[format(day, 'yyyy-MM-dd')].map(app => (
+                  <AppointmentCard key={app.id} appointment={app} onUpdate={fetchAppointments} />
+                ))
+              ) : (
+                <div className="text-center text-muted-foreground pt-8 text-sm">אין תורים</div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 
