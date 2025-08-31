@@ -10,11 +10,13 @@ const Home = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // This effect handles redirection AFTER the loading is complete.
     if (!loading && !session) {
       navigate("/login");
     }
   }, [session, loading, navigate]);
 
+  // 1. Show loading indicator ONLY while the initial session is being checked.
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -23,28 +25,29 @@ const Home = () => {
     );
   }
 
+  // After loading, if there's no session, the useEffect above will redirect.
+  // Return null to prevent any flicker of content before redirection.
   if (!session) {
-    // This case is handled by the useEffect, but as a fallback
     return null;
   }
 
+  // 2. Handle the critical error state: user is logged in but profile data is missing.
+  // This is what caused the infinite loop before. Now it's a clear error page.
   if (!profile) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
         <h2 className="text-2xl font-bold mb-4">שגיאה בטעינת הפרופיל</h2>
         <p className="text-muted-foreground mb-6">
-          לא הצלחנו לטעון את פרטי המשתמש שלך. ייתכן שיש בעיה בחיבור או שהחשבון שלך לא הוגדר כראוי.
+          לא הצלחנו לאמת את פרטי המשתמש שלך. אנא התנתק ונסה להתחבר שוב.
         </p>
-        <Button onClick={async () => {
-          await logout();
-          navigate('/login');
-        }} variant="destructive">
-          התנתק ונסה להתחבר שוב
+        <Button onClick={logout} variant="destructive">
+          התנתקות
         </Button>
       </div>
     );
   }
 
+  // 3. Success case: User is logged in and has a profile. Render the correct dashboard.
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       <header className="flex justify-between items-center mb-8">

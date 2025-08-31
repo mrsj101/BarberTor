@@ -30,43 +30,49 @@ const SessionContext = createContext<SessionContextValue | undefined>(
 export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-
-    if (error || !data) {
-      console.error("Error fetching profile or profile not found:", error);
-      setProfile(null);
-    } else {
-      setProfile(data);
-    }
-  };
+  const [loading, setLoading] = useState(true); // Start as true
 
   useEffect(() => {
-    setLoading(true);
-    
+    // Set loading to false only once, after the initial check is complete.
+    let initialCheckComplete = false;
+    const setInitialLoadDone = () => {
+      if (!initialCheckComplete) {
+        setLoading(false);
+        initialCheckComplete = true;
+      }
+    };
+
+    // 1. Get the initial session state
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
-        await fetchProfile(session.user.id);
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+        setProfile(profileData || null);
       }
-      setLoading(false);
+      setInitialLoadDone();
     });
 
+    // 2. Listen for any auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", session.user.id)
+            .single();
+          setProfile(profileData || null);
         } else {
+          // If user logs out, clear the profile
           setProfile(null);
         }
-        setLoading(false);
+        // If a change happens, the initial load is definitely done.
+        setInitialLoadDone();
       }
     );
 
@@ -77,6 +83,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     await supabase.auth.signOut();
+    // Manually clear state for immediate UI update
+    setSession(null);
+    setProfile(null);
   };
 
   const value = {
