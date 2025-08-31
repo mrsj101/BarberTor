@@ -17,7 +17,6 @@ type Appointment = {
 const Dashboard = () => {
   const [stats, setStats] = useState({ pending: 0, today: 0, week: 0 });
   const [pendingAppointments, setPendingAppointments] = useState<Appointment[]>([]);
-  const [todaysAppointments, setTodaysAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,7 +33,6 @@ const Dashboard = () => {
       const { data, error } = await supabase
         .from("appointments")
         .select("id, start_time, status, profiles(first_name), services(name)")
-        .gte("start_time", weekStart)
         .order("start_time", { ascending: true });
 
       if (error) {
@@ -47,7 +45,6 @@ const Dashboard = () => {
 
         setStats({ pending: pending.length, today: todays.length, week: week.length });
         setPendingAppointments(pending);
-        setTodaysAppointments(todays);
       }
       setLoading(false);
     };
@@ -70,7 +67,7 @@ const Dashboard = () => {
           <PendingRequestsPreview appointments={pendingAppointments} isLoading={loading} />
         </div>
         <div>
-          <TodaysAgenda appointments={todaysAppointments} isLoading={loading} />
+          <TodaysAgenda />
         </div>
       </div>
     </div>
