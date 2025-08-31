@@ -37,7 +37,7 @@ export const MyAppointments = () => {
       if (error) {
         console.error("Error fetching appointments:", error);
       } else if (data) {
-        setAppointments(data as Appointment[]);
+        setAppointments(data as unknown as Appointment[]);
       }
       setLoading(false);
     };

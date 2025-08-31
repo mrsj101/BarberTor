@@ -34,7 +34,7 @@ const AdminDashboard = () => {
       console.error("Error fetching appointments:", error);
       setAppointments([]);
     } else if (data) {
-      setAppointments(data as Appointment[]);
+      setAppointments(data as unknown as Appointment[]);
     }
     setLoading(false);
   }, [weekInterval]);
