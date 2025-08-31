@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, Calendar, Mail, Menu, X } from "lucide-react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { LayoutDashboard, Calendar, Mail, Menu, X, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useSession } from "@/contexts/SessionContext";
 
 const navItems = [
   { href: "/admin/dashboard", label: "דשבורד", icon: LayoutDashboard },
@@ -12,6 +13,13 @@ const navItems = [
 
 const AdminLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { logout } = useSession();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -21,7 +29,7 @@ const AdminLayout = () => {
           <X className="h-6 w-6" />
         </Button>
       </div>
-      <nav className="flex flex-col gap-2">
+      <nav className="flex-1 flex flex-col gap-2">
         {navItems.map((item) => (
           <NavLink
             key={item.href}
@@ -39,6 +47,12 @@ const AdminLayout = () => {
           </NavLink>
         ))}
       </nav>
+      <div className="mt-auto">
+        <Button variant="ghost" className="w-full justify-start gap-3 px-3 py-2 text-muted-foreground hover:text-primary" onClick={handleLogout}>
+          <LogOut className="h-4 w-4" />
+          התנתקות
+        </Button>
+      </div>
     </div>
   );
 
@@ -54,7 +68,7 @@ const AdminLayout = () => {
 
       {/* Sidebar (works for both mobile and desktop) */}
       <aside className={cn(
-        "fixed inset-y-0 right-0 z-30 w-64 bg-muted/40 p-4 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
+        "fixed inset-y-0 right-0 z-30 w-full bg-background p-4 transform transition-transform duration-300 ease-in-out sm:w-64 md:relative md:translate-x-0",
         isSidebarOpen ? "translate-x-0" : "translate-x-full"
       )}>
         <SidebarContent />
