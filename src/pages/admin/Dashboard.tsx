@@ -75,7 +75,9 @@ const Dashboard = () => {
           todayDisplayItems.slice(0, 5).map(a => ({
             id: a.id,
             primaryText: a.profiles?.first_name || "לקוח",
-            secondaryText: format(new Date(a.start_time), 'HH:mm')
+            secondaryText: todaysUpcoming.length > 0 
+              ? format(new Date(a.start_time), 'HH:mm')
+              : format(new Date(a.start_time), 'EEE, HH:mm', { locale: he })
           }))
         );
 
