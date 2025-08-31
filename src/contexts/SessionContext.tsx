@@ -32,64 +32,44 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const getProfile = async (user: User | null) => {
-    if (!user) {
-      setProfile(null);
-      return;
-    }
-    try {
-      const { data: profileData, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-      
-      if (error) {
-        console.error("Error fetching profile:", error.message);
-        setProfile(null);
-      } else {
-        setProfile(profileData || null);
-      }
-    } catch (e) {
-      console.error("An unexpected error occurred while fetching profile:", e);
-      setProfile(null);
-    }
-  };
-
   useEffect(() => {
-    const initializeAndListen = async () => {
-      // 1. Get the initial session
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      setSession(initialSession);
-      
-      // 2. Get the initial profile based on the session
-      await getProfile(initialSession?.user ?? null);
-      
-      // 3. Mark initial loading as complete
-      setLoading(false);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
 
-      // 4. Set up a listener for any future auth changes
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (_event, newSession) => {
-          setSession(newSession);
-          await getProfile(newSession?.user ?? null);
+      if (session?.user) {
+        try {
+          const { data: profileData, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", session.user.id)
+            .single();
+          
+          if (error) {
+            console.error("Error fetching profile:", error.message);
+            setProfile(null);
+          } else {
+            setProfile(profileData || null);
+          }
+        } catch (e) {
+          console.error("An unexpected error occurred while fetching profile:", e);
+          setProfile(null);
         }
-      );
+      } else {
+        setProfile(null);
+      }
+      
+      setLoading(false);
+    });
 
-      return subscription;
-    };
-
-    const subscriptionPromise = initializeAndListen();
-
-    // Cleanup the subscription on component unmount
     return () => {
-      subscriptionPromise.then(subscription => subscription?.unsubscribe());
+      subscription.unsubscribe();
     };
   }, []);
 
   const logout = async () => {
     await supabase.auth.signOut();
-    // onAuthStateChange will handle clearing the session and profile state.
   };
 
   const value = {
