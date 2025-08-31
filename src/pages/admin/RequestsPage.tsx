@@ -3,7 +3,7 @@ import { PendingAppointmentsList } from "@/components/admin/PendingAppointmentsL
 const RequestsPage = () => {
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">כל הזמנות התור הממתינות</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center md:text-right">כל הזמנות התור הממתינות</h1>
       <PendingAppointmentsList />
     </div>
   );

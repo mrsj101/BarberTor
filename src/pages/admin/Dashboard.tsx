@@ -86,7 +86,7 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">דשבורד ניהול</h1>
+      <h1 className="text-3xl font-bold text-center md:text-right">דשבורד ניהול</h1>
       
       <div className="grid gap-4 md:grid-cols-3">
         <DashboardStatCard title="הזמנות ממתינות" value={stats.pending} icon={Mail} isLoading={loading} />
