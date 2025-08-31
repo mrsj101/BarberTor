@@ -2,6 +2,8 @@ import { useSession } from "@/contexts/SessionContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import ClientDashboard from "@/pages/client/ClientDashboard";
 
 const Home = () => {
   const { session, profile, loading, logout } = useSession();
@@ -21,22 +23,17 @@ const Home = () => {
     );
   }
 
-  // Later, we will render AdminDashboard or ClientDashboard based on profile.is_admin
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl">שלום, {profile.first_name}</h1>
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">שלום, {profile.first_name}</h1>
         <Button onClick={logout} variant="destructive">
           התנתקות
         </Button>
-      </div>
-      <div className="mt-8">
-        {profile.is_admin ? (
-          <p>ברוך הבא, אדמין! כאן יוצג ממשק הניהול.</p>
-        ) : (
-          <p>ברוך הבא! כאן יוצג מסך הבית ללקוחות.</p>
-        )}
-      </div>
+      </header>
+      <main>
+        {profile.is_admin ? <AdminDashboard /> : <ClientDashboard />}
+      </main>
     </div>
   );
 };
