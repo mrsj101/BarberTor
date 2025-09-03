@@ -16,8 +16,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+type TimeSlot = { start: string; end: string };
 type WorkingHours = {
-  [key: string]: { start: string; end: string } | null;
+  [key: string]: TimeSlot[] | null;
 };
 
 type TimeRange = { start: Date; end: Date };
@@ -50,9 +51,9 @@ serve(async (req) => {
     const bufferMinutes: number = settingsData.buffer_minutes;
 
     const dayOfWeek = date.toLocaleDateString("en-US", { weekday: 'long' }).toLowerCase();
-    const dayWorkingHours = workingHours[dayOfWeek];
+    const dayWorkingRanges = workingHours[dayOfWeek];
 
-    if (!dayWorkingHours) {
+    if (!dayWorkingRanges || dayWorkingRanges.length === 0) {
       return new Response(JSON.stringify([]), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
@@ -92,34 +93,37 @@ serve(async (req) => {
     ];
 
     const allSlots: Slot[] = [];
-    const [startHour, startMinute] = dayWorkingHours.start.split(":").map(Number);
-    const [endHour, endMinute] = dayWorkingHours.end.split(":").map(Number);
 
-    let currentTime = setMinutes(setHours(dayStart, startHour), startMinute);
-    const endTime = setMinutes(setHours(dayStart, endHour), endMinute);
+    for (const range of dayWorkingRanges) {
+      const [startHour, startMinute] = range.start.split(":").map(Number);
+      const [endHour, endMinute] = range.end.split(":").map(Number);
 
-    while (isBefore(currentTime, endTime)) {
-      const slotEnd = addMinutes(currentTime, serviceDuration);
+      let currentTime = setMinutes(setHours(dayStart, startHour), startMinute);
+      const endTime = setMinutes(setHours(dayStart, endHour), endMinute);
 
-      if (isAfter(slotEnd, endTime)) {
-        break;
+      while (isBefore(currentTime, endTime)) {
+        const slotEnd = addMinutes(currentTime, serviceDuration);
+
+        if (isAfter(slotEnd, endTime)) {
+          break;
+        }
+
+        let isFutureSlot = true;
+        if (isSelectedDateToday) {
+          isFutureSlot = isAfter(currentTime, new Date());
+        }
+
+        const isOverlapping = busySlots.some(busySlot => {
+          return isBefore(currentTime, busySlot.end) && isAfter(slotEnd, busySlot.start);
+        });
+
+        allSlots.push({
+          time: currentTime.toISOString(),
+          available: !isOverlapping && isFutureSlot,
+        });
+
+        currentTime = addMinutes(currentTime, 15);
       }
-
-      let isFutureSlot = true;
-      if (isSelectedDateToday) {
-        isFutureSlot = isAfter(currentTime, new Date());
-      }
-
-      const isOverlapping = busySlots.some(busySlot => {
-        return isBefore(currentTime, busySlot.end) && isAfter(slotEnd, busySlot.start);
-      });
-
-      allSlots.push({
-        time: currentTime.toISOString(),
-        available: !isOverlapping && isFutureSlot,
-      });
-
-      currentTime = addMinutes(currentTime, 15);
     }
 
     return new Response(JSON.stringify(allSlots), {

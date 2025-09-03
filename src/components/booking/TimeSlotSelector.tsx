@@ -31,9 +31,15 @@ export const TimeSlotSelector = ({ service, onSelectTime, onBack }: Props) => {
       setSlots([]);
       
       try {
+        // Format date to YYYY-MM-DD to avoid timezone issues on the server
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}`;
+
         const { data, error } = await supabase.functions.invoke('get-available-slots', {
           body: { 
-            date: date.toISOString(), 
+            date: formattedDate, 
             serviceDuration: service.duration_minutes 
           },
         });
