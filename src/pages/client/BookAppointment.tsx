@@ -49,6 +49,16 @@ const BookAppointment = () => {
     fetchAppointments();
   }, [user]);
 
+  const handleServiceSelect = (service: Service) => {
+    setSelectedService(service);
+    setStep(2);
+  };
+
+  const handleTimeSelect = (time: Date) => {
+    setSelectedTime(time);
+    setStep(3);
+  };
+
   const handleSubmit = async () => {
     if (!selectedService || !selectedTime || !user) return;
 
