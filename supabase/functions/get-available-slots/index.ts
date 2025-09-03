@@ -8,7 +8,6 @@ import {
   isBefore,
   addMinutes,
   isAfter,
-  isToday,
 } from "https://esm.sh/date-fns@2.30.0";
 
 const corsHeaders = {
@@ -31,7 +30,8 @@ serve(async (req) => {
 
   try {
     const { date: dateString, serviceDuration } = await req.json();
-    const date = new Date(dateString);
+    // The date string is YYYY-MM-DD. Create a date object that represents the start of that day in UTC.
+    const date = new Date(`${dateString}T00:00:00.000Z`);
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -50,7 +50,7 @@ serve(async (req) => {
     const workingHours: WorkingHours = settingsData.working_hours;
     const bufferMinutes: number = settingsData.buffer_minutes;
 
-    const dayOfWeek = date.toLocaleDateString("en-US", { weekday: 'long' }).toLowerCase();
+    const dayOfWeek = date.toLocaleDateString("en-US", { weekday: 'long', timeZone: 'UTC' }).toLowerCase();
     const dayWorkingRanges = workingHours[dayOfWeek];
 
     if (!dayWorkingRanges || dayWorkingRanges.length === 0) {
@@ -62,7 +62,6 @@ serve(async (req) => {
 
     const dayStart = startOfDay(date);
     const dayEnd = endOfDay(date);
-    const isSelectedDateToday = isToday(dayStart);
 
     const { data: appointments, error: appointmentsError } = await supabaseAdmin
       .from("appointments")
@@ -108,18 +107,16 @@ serve(async (req) => {
           break;
         }
 
-        let isFutureSlot = true;
-        if (isSelectedDateToday) {
-          isFutureSlot = isAfter(currentTime, new Date());
-        }
-
         const isOverlapping = busySlots.some(busySlot => {
           return isBefore(currentTime, busySlot.end) && isAfter(slotEnd, busySlot.start);
         });
+        
+        // Return a local ISO-like string (without 'Z') so the client browser interprets it in its own timezone.
+        const localIsoString = currentTime.toISOString().slice(0, 19);
 
         allSlots.push({
-          time: currentTime.toISOString(),
-          available: !isOverlapping && isFutureSlot,
+          time: localIsoString,
+          available: !isOverlapping,
         });
 
         currentTime = addMinutes(currentTime, 15);
