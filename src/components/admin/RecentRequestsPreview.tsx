@@ -12,57 +12,60 @@ type Props = {
   onUpdate: () => void;
 };
 
-export const RecentRequestsPreview = ({ appointments, isLoading, onUpdate }: Props) => {
-  const [filter, setFilter] = useState<'all' | 'active' | 'cancelled' | 'rejected'>('active');
+type FilterType = 'all' | 'pending' | 'approved' | 'cancelled' | 'rejected';
 
-  const filteredAppointments = appointments.filter(app => {
-    if (filter === 'all') return true;
-    if (filter === 'active') return app.status === 'pending' || app.status === 'approved';
-    if (filter === 'cancelled') return app.status === 'cancelled';
-    if (filter === 'rejected') return app.status === 'rejected';
-    return true;
-  });
+export const RecentRequestsPreview = ({ appointments, isLoading, onUpdate }: Props) => {
+  const [filter, setFilter] = useState<FilterType>('pending');
+
+  const filteredAppointments = appointments
+    .filter(app => {
+      switch (filter) {
+        case 'all':
+          return true;
+        case 'pending':
+          return app.status === 'pending';
+        case 'approved':
+          return app.status === 'approved';
+        case 'cancelled':
+          return app.status === 'cancelled';
+        case 'rejected':
+          return app.status === 'rejected';
+        default:
+          return true;
+      }
+    })
+    .slice(0, 5);
+
+  const filterButtons: { key: FilterType; label: string }[] = [
+    { key: 'all', label: 'הכל' },
+    { key: 'pending', label: 'דורש טיפול' },
+    { key: 'approved', label: 'מאושרים' },
+    { key: 'cancelled', label: 'בוטל' },
+    { key: 'rejected', label: 'נדחה' },
+  ];
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>הזמנות אחרונות</CardTitle>
-        <div className="flex gap-2 mt-2 justify-end">
-          <Button
-            variant={filter === 'all' ? 'default' : 'secondary'}
-            size="sm"
-            onClick={() => setFilter('all')}
-          >
-            הכל
-          </Button>
-          <Button
-            variant={filter === 'active' ? 'default' : 'secondary'}
-            size="sm"
-            onClick={() => setFilter('active')}
-          >
-            דורש טיפול
-          </Button>
-          <Button
-            variant={filter === 'cancelled' ? 'default' : 'secondary'}
-            size="sm"
-            onClick={() => setFilter('cancelled')}
-          >
-            בוטל
-          </Button>
-          <Button
-            variant={filter === 'rejected' ? 'default' : 'secondary'}
-            size="sm"
-            onClick={() => setFilter('rejected')}
-          >
-            נדחה
-          </Button>
+        <div className="flex gap-2 mt-2 justify-end flex-wrap">
+          {filterButtons.map(({ key, label }) => (
+            <Button
+              key={key}
+              variant={filter === key ? 'default' : 'secondary'}
+              size="sm"
+              onClick={() => setFilter(key)}
+            >
+              {label}
+            </Button>
+          ))}
         </div>
       </CardHeader>
       <CardContent className="space-y-4 min-h-[250px]">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)
         ) : filteredAppointments.length === 0 ? (
-          <p className="text-muted-foreground text-center py-4">לא נמצאו הזמנות אחרונות.</p>
+          <p className="text-muted-foreground text-center py-4">לא נמצאו הזמנות התואמות לסינון.</p>
         ) : (
           filteredAppointments.map(app => (
             <AppointmentCard key={app.id} appointment={app} onUpdate={onUpdate} />

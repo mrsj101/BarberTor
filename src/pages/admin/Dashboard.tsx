@@ -17,7 +17,7 @@ type Item = {
 
 const Dashboard = () => {
   const [stats, setStats] = useState({ pending: 0, today: 0, week: 0, rescheduleRequests: 0 });
-  const [recentAppointments, setRecentAppointments] = useState<Appointment[]>([]);
+  const [allAppointments, setAllAppointments] = useState<Appointment[]>([]);
   const [todayItems, setTodayItems] = useState<Item[]>([]);
   const [weekItems, setWeekItems] = useState<Item[]>([]);
   const [todaysUpcomingCount, setTodaysUpcomingCount] = useState(0);
@@ -68,7 +68,7 @@ const Dashboard = () => {
         rescheduleRequests: rescheduleCount
       });
       
-      setRecentAppointments(typedData.slice(0, 5));
+      setAllAppointments(typedData);
 
       const upcomingAppointments = typedData
         .filter(a => a.status === 'approved' && new Date(a.start_time) > now)
@@ -144,7 +144,7 @@ const Dashboard = () => {
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <h2 className="text-2xl font-semibold mb-4 text-right">הזמנות אחרונות</h2>
-          <RecentRequestsPreview appointments={recentAppointments} isLoading={loading} onUpdate={fetchData} />
+          <RecentRequestsPreview appointments={allAppointments} isLoading={loading} onUpdate={fetchData} />
         </div>
         <div>
           <TodaysAgenda />
