@@ -12,7 +12,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Calendar, Clock, AlertCircle } from "lucide-react";
 import { Calendar as UiCalendar } from "@/components/ui/calendar";
 import { he } from "date-fns/locale";
-import { addMinutes } from "date-fns";
+import { addMinutes, differenceInHours } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type AppointmentStatus = "pending" | "approved" | "rejected" | "cancelled" | "completed" | "client_approval_pending";
 
@@ -34,6 +35,7 @@ const RebookAppointment = () => {
   const { user } = useSession();
   const navigate = useNavigate();
   const [appointment, setAppointment] = useState<Appointment | null>(null);
+  const [policyHours, setPolicyHours] = useState(12);
   const [loading, setLoading] = useState(true);
   const [isRebooking, setIsRebooking] = useState(false);
   const [notes, setNotes] = useState("");
@@ -43,12 +45,11 @@ const RebookAppointment = () => {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedTime, setSelectedTime] = useState<Date | null>(null);
 
-  const fetchAppointment = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    
     try {
-      const { data, error } = await supabase
+      const appointmentPromise = supabase
         .from("appointments")
         .select("id, service_id, start_time, end_time, status, services(name, duration_minutes)")
         .eq("user_id", user.id)
@@ -58,12 +59,20 @@ const RebookAppointment = () => {
         .limit(1)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // Ignore 'single row not found'
-        throw error;
-      }
-      setAppointment(data as Appointment | null);
+      const settingsPromise = supabase
+        .from("business_settings")
+        .select("cancellation_policy_hours")
+        .single();
+
+      const [{ data: appointmentData, error: appointmentError }, { data: settingsData, error: settingsError }] = await Promise.all([appointmentPromise, settingsPromise]);
+
+      if (appointmentError && appointmentError.code !== 'PGRST116') throw appointmentError;
+      if (settingsError) console.warn("Could not fetch settings, using default.");
+
+      setAppointment(appointmentData as Appointment | null);
+      setPolicyHours(settingsData?.cancellation_policy_hours || 12);
+
     } catch (error: any) {
-      console.error("Error fetching appointment:", error);
       showError("שגיאה בטעינת התור שלך.");
     } finally {
       setLoading(false);
@@ -71,8 +80,8 @@ const RebookAppointment = () => {
   }, [user]);
 
   useEffect(() => {
-    fetchAppointment();
-  }, [fetchAppointment]);
+    fetchData();
+  }, [fetchData]);
 
   const fetchAvailableSlots = useCallback(async (date: Date) => {
     if (!appointment) return;
@@ -121,7 +130,6 @@ const RebookAppointment = () => {
     setIsRebooking(true);
     
     try {
-      // 1. Fetch auto-approval setting
       const { data: settings, error: settingsError } = await supabase
         .from("business_settings")
         .select("auto_approve_appointments")
@@ -129,14 +137,12 @@ const RebookAppointment = () => {
       if (settingsError) throw new Error("Failed to fetch settings.");
       const autoApprove = settings?.auto_approve_appointments || false;
 
-      // 2. Cancel the old appointment
       const { error: cancelError } = await supabase
         .from("appointments")
         .update({ status: 'cancelled', notes: `בוטל על ידי לקוח בעת תיאום מחדש.` })
         .eq('id', appointment.id);
       if (cancelError) throw cancelError;
 
-      // 3. Create the new appointment
       const startTime = selectedTime;
       const endTime = addMinutes(startTime, appointment.services.duration_minutes);
       const { error: insertError } = await supabase.from("appointments").insert({
@@ -154,8 +160,7 @@ const RebookAppointment = () => {
 
     } catch (error: any) {
       showError(`שגיאה בתיאום התור מחדש: ${error.message}`);
-      // Optionally, try to revert the cancellation if it failed after that
-      fetchAppointment(); // Refresh state
+      fetchData();
     } finally {
       setIsRebooking(false);
       setIsDialogOpen(false);
@@ -169,6 +174,10 @@ const RebookAppointment = () => {
       time: date.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" }),
     };
   };
+
+  const hoursUntil = appointment ? differenceInHours(new Date(appointment.start_time), new Date()) : 0;
+  const canRebook = appointment ? hoursUntil >= policyHours : false;
+  const tooltipMessage = `לא ניתן לתאם מחדש פחות מ-${policyHours} שעות לפני מועד התור.`;
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
@@ -190,8 +199,8 @@ const RebookAppointment = () => {
                 <div className="flex items-start space-x-3 space-x-reverse">
                   <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                   <div className="text-right text-sm text-blue-800">
-                    <p className="font-medium">איך זה עובד?</p>
-                    <p>בחירת מועד חדש תבטל את תורך הנוכחי ותקבע תור חדש במקומו. התור החדש ימתין לאישור (אלא אם אישור אוטומטי מופעל).</p>
+                    <p className="font-medium">מדיניות תיאום מחדש</p>
+                    <p>ניתן לתאם מחדש עד {policyHours} שעות לפני מועד התור. בחירת מועד חדש תבטל את תורך הנוכחי ותקבע תור חדש במקומו.</p>
                   </div>
                 </div>
               </div>
@@ -213,48 +222,61 @@ const RebookAppointment = () => {
                     </div>
                   </div>
                 </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button>תיאום מחדש</Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle className="text-center">בחירת מועד חדש</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2 text-right text-gray-900">1. בחר תאריך חדש:</label>
-                        <div className="flex justify-center">
-                          <UiCalendar locale={he} mode="single" selected={newDate} onSelect={setNewDate} className="rounded-md border" disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))} />
-                        </div>
+                <TooltipProvider>
+                  <Tooltip delayDuration={100}>
+                    <TooltipTrigger asChild>
+                      <div tabIndex={0}>
+                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button disabled={!canRebook}>תיאום מחדש</Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle className="text-center">בחירת מועד חדש</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div>
+                                <label className="block text-sm font-medium mb-2 text-right text-gray-900">1. בחר תאריך חדש:</label>
+                                <div className="flex justify-center">
+                                  <UiCalendar locale={he} mode="single" selected={newDate} onSelect={setNewDate} className="rounded-md border" disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))} />
+                                </div>
+                              </div>
+                              {newDate && (
+                                <div>
+                                  <label className="block text-sm font-medium mb-2 text-right text-gray-900">2. בחר שעה חדשה:</label>
+                                  <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+                                    {loadingSlots && Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+                                    {!loadingSlots && availableSlots.length > 0 && availableSlots.map((slot) => (
+                                      <Button key={slot.toISOString()} variant={selectedTime?.getTime() === slot.getTime() ? "default" : "outline"} onClick={() => setSelectedTime(slot)} className="h-10 text-sm">
+                                        {slot.toLocaleTimeString("he-IL", { hour: '2-digit', minute: '2-digit' })}
+                                      </Button>
+                                    ))}
+                                    {!loadingSlots && availableSlots.length === 0 && <p className="col-span-4 text-center text-muted-foreground text-sm">אין זמנים פנויים ביום זה.</p>}
+                                  </div>
+                                </div>
+                              )}
+                              <div>
+                                <label className="block text-sm font-medium mb-2 text-right text-gray-900">3. הערות (אופציונלי):</label>
+                                <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="הערות לתור החדש..." className="min-h-[80px]" dir="rtl" />
+                              </div>
+                              <div className="flex gap-2 pt-4">
+                                <Button onClick={handleRebookSubmit} disabled={!selectedTime || isRebooking} className="flex-1">
+                                  {isRebooking ? "מעדכן..." : "אשר תיאום מחדש"}
+                                </Button>
+                                <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">ביטול</Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </div>
-                      {newDate && (
-                        <div>
-                          <label className="block text-sm font-medium mb-2 text-right text-gray-900">2. בחר שעה חדשה:</label>
-                          <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
-                            {loadingSlots && Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
-                            {!loadingSlots && availableSlots.length > 0 && availableSlots.map((slot) => (
-                              <Button key={slot.toISOString()} variant={selectedTime?.getTime() === slot.getTime() ? "default" : "outline"} onClick={() => setSelectedTime(slot)} className="h-10 text-sm">
-                                {slot.toLocaleTimeString("he-IL", { hour: '2-digit', minute: '2-digit' })}
-                              </Button>
-                            ))}
-                            {!loadingSlots && availableSlots.length === 0 && <p className="col-span-4 text-center text-muted-foreground text-sm">אין זמנים פנויים ביום זה.</p>}
-                          </div>
-                        </div>
-                      )}
-                      <div>
-                        <label className="block text-sm font-medium mb-2 text-right text-gray-900">3. הערות (אופציונלי):</label>
-                        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="הערות לתור החדש..." className="min-h-[80px]" dir="rtl" />
-                      </div>
-                      <div className="flex gap-2 pt-4">
-                        <Button onClick={handleRebookSubmit} disabled={!selectedTime || isRebooking} className="flex-1">
-                          {isRebooking ? "מעדכן..." : "אשר תיאום מחדש"}
-                        </Button>
-                        <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">ביטול</Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                    </TooltipTrigger>
+                    {!canRebook && (
+                      <TooltipContent>
+                        <p>{tooltipMessage}</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
           )}
