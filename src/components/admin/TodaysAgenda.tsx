@@ -34,7 +34,12 @@ export const TodaysAgenda = () => {
 
     const { data, error } = await supabase
       .from("appointments")
-      .select("id, start_time, profiles(first_name), services(name)")
+      .select(`
+        id, 
+        start_time, 
+        profiles ( first_name ), 
+        services ( name )
+      `)
       .eq("status", "approved")
       .gte("start_time", dateStart)
       .lte("start_time", dateEnd)

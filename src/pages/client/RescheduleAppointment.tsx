@@ -11,7 +11,6 @@ import { showError, showSuccess } from "@/utils/toast";
 import { Link } from "react-router-dom";
 import { Calendar, Clock, AlertCircle } from "lucide-react";
 import { Calendar as UiCalendar } from "@/components/ui/calendar";
-import { generateAvailableSlots } from "@/lib/availability";
 
 type AppointmentStatus = "pending" | "approved" | "rejected" | "cancelled" | "completed" | "client_approval_pending";
 
@@ -142,27 +141,23 @@ const RescheduleAppointment = () => {
     setAvailableSlots([]);
     
     try {
-      const { data: settingsData, error: settingsError } = await supabase
-        .from("business_settings")
-        .select("working_hours, buffer_minutes")
-        .single();
+      const { data, error } = await supabase.functions.invoke('get-available-slots', {
+        body: {
+          date: date.toISOString(),
+          serviceDuration: selectedAppointment.services.duration_minutes,
+        },
+      });
 
-      if (settingsError || !settingsData) {
-        console.error("Error fetching settings:", settingsError);
-        setLoadingSlots(false);
-        return;
+      if (error) {
+        throw error;
       }
 
-      const availableSlots = await generateAvailableSlots({
-        date,
-        serviceDuration: selectedAppointment.services.duration_minutes,
-        workingHours: settingsData.working_hours,
-        bufferMinutes: settingsData.buffer_minutes,
-      });
-      
-      setAvailableSlots(availableSlots);
+      const slots = data.map((slot: string) => new Date(slot));
+      setAvailableSlots(slots);
+
     } catch (error) {
-      console.error("Error generating slots:", error);
+      console.error("Error fetching available slots:", error);
+      showError("שגיאה בטעינת זמנים פנויים.");
     } finally {
       setLoadingSlots(false);
     }

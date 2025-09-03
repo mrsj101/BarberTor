@@ -3,9 +3,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { generateAvailableSlots } from "@/lib/availability";
 import { Skeleton } from "../ui/skeleton";
 import type { Service } from "@/pages/client/BookAppointment";
+import { showError } from "@/utils/toast";
 
 type Props = {
   service: Service;
@@ -25,26 +25,27 @@ export const TimeSlotSelector = ({ service, onSelectTime, onBack }: Props) => {
       setLoading(true);
       setSlots([]);
       
-      const { data: settingsData, error: settingsError } = await supabase
-        .from("business_settings")
-        .select("working_hours, buffer_minutes")
-        .single();
+      try {
+        const { data, error } = await supabase.functions.invoke('get-available-slots', {
+          body: { 
+            date: date.toISOString(), 
+            serviceDuration: service.duration_minutes 
+          },
+        });
 
-      if (settingsError || !settingsData) {
-        console.error("Error fetching settings:", settingsError);
+        if (error) {
+          throw error;
+        }
+
+        const availableSlots = data.map((slot: string) => new Date(slot));
+        setSlots(availableSlots);
+
+      } catch (error) {
+        console.error("Error fetching available slots:", error);
+        showError("שגיאה בטעינת זמנים פנויים. נסה שוב.");
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const availableSlots = await generateAvailableSlots({
-        date,
-        serviceDuration: service.duration_minutes,
-        workingHours: settingsData.working_hours,
-        bufferMinutes: settingsData.buffer_minutes,
-      });
-      
-      setSlots(availableSlots);
-      setLoading(false);
     };
 
     fetchAndGenerateSlots();
