@@ -45,7 +45,7 @@ serve(async (req) => {
 
     const { data: settingsData, error: settingsError } = await supabaseAdmin
       .from("business_settings")
-      .select("working_hours, buffer_minutes")
+      .select("working_hours") // Removed buffer_minutes from here
       .single();
 
     if (settingsError || !settingsData) {
@@ -53,7 +53,6 @@ serve(async (req) => {
     }
     
     const workingHours: WorkingHours = settingsData.working_hours;
-    const bufferMinutes: number = settingsData.buffer_minutes;
 
     // --- Get correct day of week for the target timezone ---
     const localDateForDay = utcToZonedTime(new Date(dateString), TIMEZONE);
@@ -91,7 +90,7 @@ serve(async (req) => {
     const busySlots: TimeRange[] = [
       ...(appointments || []).map(a => ({
         start: new Date(a.start_time),
-        end: addMinutes(new Date(a.end_time), bufferMinutes),
+        end: new Date(a.end_time), // FIX: Removed the buffer logic
       })),
       ...(blocks || []).map(b => ({
         start: new Date(b.start_time),
