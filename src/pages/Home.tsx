@@ -18,7 +18,8 @@ const Home = () => {
     }
   }, [session, profile, loading, navigate]);
 
-  if (loading || !session || profile?.is_admin) {
+  // הצג טעינה כל עוד טוען, אין session, או profile עדיין לא נטען
+  if (loading || !session || profile === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p>טוען...</p>
@@ -26,7 +27,8 @@ const Home = () => {
     );
   }
 
-  if (!profile) {
+  // הצג שגיאה רק אם loading הסתיים, יש session, ו-profile עדיין null (כלומר, טעינה נכשלה)
+  if (!loading && session && profile === null) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
         <h2 className="text-2xl font-bold mb-4">שגיאה בטעינת הפרופיל</h2>

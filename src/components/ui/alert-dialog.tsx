@@ -63,7 +63,8 @@ const AlertDialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      // On desktop: row-reverse, gap-2, justify-end, so destructive button is rightmost in RTL
+      "flex flex-col-reverse sm:flex-row-reverse sm:justify-end sm:gap-2",
       className,
     )}
     {...props}
@@ -77,7 +78,7 @@ const AlertDialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold", className)}
+    className={cn("text-lg font-semibold text-center", className)}
     {...props}
   />
 ));
@@ -89,7 +90,8 @@ const AlertDialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-sm text-muted-foreground text-right rtl:!text-right", className)}
+    dir="rtl"
     {...props}
   />
 ));

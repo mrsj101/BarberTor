@@ -1,35 +1,253 @@
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* --- Base Styles & Animations --- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes logo-spin {
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+}
+
+@keyframes rotate-light {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slideInFromBottom {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    /* transform: translateY(50px); */
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
-.card {
-  padding: 2em;
+
+/* --- Splash Screen Styles --- */
+.splash-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  background-color: #FFFFFF;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
 }
 
-.read-the-docs {
-  color: #888;
+.splash-logo {
+  width: 60vw;
+  max-width: 360px;
+  height: auto;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+
+/* --- Welcome Screen Styles --- */
+.welcome-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  background-color: transparent;
+  background-image: url('/welcome-background.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.welcome-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  gap: 2rem; /* Space between logo circle and text box */
+}
+
+.welcome-logo-circle { /* New style for the blurred circle around the logo */
+  width: 300px; /* Increased size for the circle */
+  height: 300px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.15); /* Semi-transparent */
+  backdrop-filter: blur(10px); /* Blurred effect */
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden; /* Re-added overflow: hidden; */
+  animation: slideInFromBottom 1s ease-out forwards;
+  animation-delay: 0.5s;
+  opacity: 0; /* Start hidden for animation */
+}
+
+.welcome-main-logo {
+  max-width: 300px;
+  max-height: 300px;
+  width: 100%; /* Ensure it scales */
+  height: auto; /* Maintain aspect ratio */
+}
+
+.welcome-text-box { /* New class for the blurred box */
+  background-color: rgba(255, 255, 255, 0.15); /* Semi-transparent white */
+  backdrop-filter: blur(10px); /* Blur effect */
+  border-radius: 15px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem; /* Space between elements inside the box */
+  animation: slideInFromBottom 1s ease-out forwards;
+  animation-delay: 0.5s; /* Reduced delay for faster effect start */
+  opacity: 0; /* Start hidden for animation */
+  min-width: 300px; /* Added to prevent layout shift */
+  min-height: 250px; /* Added to prevent layout shift */
+}
+
+.welcome-title {
+  font-size: clamp(2.5em, 10vw, 4em);
+  color: #FFFFFF;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.welcome-tagline {
+  font-size: clamp(1em, 4vw, 1.3em);
+  color: #CCCCCC;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.welcome-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  animation: slideInFromBottom 1s ease-out forwards;
+  animation-delay: 2s;
+  opacity: 0; /* Start hidden for animation */
+}
+
+.welcome-button-login,
+.welcome-button-signup {
+  min-width: 140px;
+  padding: 1.5rem 2rem;
+  font-size: 1.1em;
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+  .welcome-actions {
+    flex-direction: column;
+    width: 80%;
+  }
+
+  .welcome-button-login,
+  .welcome-button-signup {
+    width: 100%;
+  }
+
+  .welcome-text-box {
+    padding: 1.5rem;
+  }
+
+  .welcome-logo-circle {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+.welcome-text-box { /* New class for the blurred box */
+  background-color: rgba(255, 255, 255, 0.15); /* Semi-transparent white */
+  backdrop-filter: blur(10px); /* Blur effect */
+  border-radius: 15px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem; /* Space between elements inside the box */
+  animation: slideInFromBottom 1s ease-out forwards;
+  animation-delay: 0.5s; /* Reduced delay for faster effect start */
+  opacity: 0; /* Start hidden for animation */
+}
+
+.welcome-title {
+  font-size: clamp(2.5em, 10vw, 4em);
+  color: #FFFFFF;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.welcome-tagline {
+  font-size: clamp(1em, 4vw, 1.3em);
+  color: #CCCCCC;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.welcome-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  animation: slideInFromBottom 1s ease-out forwards;
+  animation-delay: 2s;
+  opacity: 0; /* Start hidden for animation */
+}
+
+.welcome-button-login,
+.welcome-button-signup {
+  min-width: 140px;
+  padding: 1.5rem 2rem;
+  font-size: 1.1em;
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+  .welcome-actions {
+    flex-direction: column;
+    width: 80%;
+  }
+
+  .welcome-button-login,
+  .welcome-button-signup {
+    width: 100%;
+  }
+
+  .welcome-text-box {
+    padding: 1.5rem;
+  }
+
+  .welcome-logo-circle {
+    width: 200px;
+    height: 200px;
+  }
 }

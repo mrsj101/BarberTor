@@ -11,7 +11,7 @@ export type AppointmentWithDetails = {
   id: string;
   start_time: string;
   end_time: string;
-  status: "pending" | "approved" | "rejected" | "cancelled" | "completed";
+  status: "pending" | "approved" | "rejected" | "cancelled" | "completed" | "client_approval_pending";
   notes: string | null;
   profiles: {
     id: string;
@@ -22,6 +22,7 @@ export type AppointmentWithDetails = {
     id: string;
     name: string | null;
     duration_minutes: number;
+    price: number | null;
   } | null;
 };
 

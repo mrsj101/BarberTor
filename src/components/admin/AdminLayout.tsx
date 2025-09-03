@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Calendar, Mail, Menu, X, LogOut, ListTodo } from "lucide-react";
+import { LayoutDashboard, Calendar, Mail, Menu, X, LogOut, ListTodo, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/contexts/SessionContext";
@@ -8,8 +8,9 @@ import { useSession } from "@/contexts/SessionContext";
 const navItems = [
   { href: "/admin/dashboard", label: "דשבורד", icon: LayoutDashboard },
   { href: "/admin/calendar", label: "יומן", icon: Calendar },
-  { href: "/admin/requests", label: "הזמנות תור", icon: Mail },
+  { href: "/admin/requests", label: "אישור תורים / תיאום מחדש", icon: Mail },
   { href: "/admin/appointments", label: "ניהול תורים", icon: ListTodo },
+  { href: "/admin/clients", label: "ניהול לקוחות", icon: Users },
 ];
 
 const AdminLayout = () => {
@@ -30,7 +31,7 @@ const AdminLayout = () => {
           <X className="h-6 w-6" />
         </Button>
       </div>
-      <nav className="flex-1 flex flex-col gap-2">
+      <nav className="flex-1 flex flex-col gap-2" dir="rtl">
         {navItems.map((item) => (
           <NavLink
             key={item.href}
@@ -38,13 +39,13 @@ const AdminLayout = () => {
             onClick={() => setIsSidebarOpen(false)}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary justify-center text-center rtl:text-center",
                 isActive && "bg-primary/10 text-primary"
               )
             }
           >
             <item.icon className="h-4 w-4" />
-            {item.label}
+            <span className="w-full text-center">{item.label}</span>
           </NavLink>
         ))}
       </nav>

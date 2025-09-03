@@ -1,9 +1,8 @@
 import { ActionCards } from "@/components/home/ActionCards";
 import { MyAppointments } from "@/components/home/MyAppointments";
-import { SocialLinks } from "@/components/home/SocialLinks";
-import { Gallery } from "@/components/home/Gallery";
+import { InstagramGallery } from "@/components/home/InstagramGallery";
 import { FloatingButtons } from "@/components/home/FloatingButtons";
-import React from "react";
+import * as React from "react";
 
 const AnimatedDiv = ({ children, delay }: { children: React.ReactNode, delay: number }) => (
   <div
@@ -24,10 +23,7 @@ const ClientDashboard = () => {
         <MyAppointments />
       </AnimatedDiv>
       <AnimatedDiv delay={300}>
-        <SocialLinks />
-      </AnimatedDiv>
-      <AnimatedDiv delay={400}>
-        <Gallery />
+        <InstagramGallery />
       </AnimatedDiv>
       <FloatingButtons />
     </div>

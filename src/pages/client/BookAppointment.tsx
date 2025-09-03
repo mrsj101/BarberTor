@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ServiceSelector } from "@/components/booking/ServiceSelector";
 import { TimeSlotSelector } from "@/components/booking/TimeSlotSelector";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ export type Service = {
   id: string;
   name: string;
   duration_minutes: number;
-  price: number;
+  price: number | null;
 };
 
 const BookAppointment = () => {
@@ -25,6 +25,32 @@ const BookAppointment = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useSession();
   const navigate = useNavigate();
+
+  // --- שינוי: בדיקת תור עתידי פעיל ---
+  const [hasFutureAppointment, setHasFutureAppointment] = useState(false);
+  const [loadingFuture, setLoadingFuture] = useState(true);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      if (!user) return;
+      setLoadingFuture(true);
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("id, start_time, status")
+        .eq("user_id", user.id)
+        .in("status", ["pending", "approved", "client_approval_pending"])
+        .gte("start_time", new Date().toISOString());
+
+      if (error) {
+        setHasFutureAppointment(false);
+      } else {
+        setHasFutureAppointment((data?.length ?? 0) > 0);
+      }
+      setLoadingFuture(false);
+    };
+    fetchAppointments();
+  }, [user]);
+  // --- סוף שינוי ---
 
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
@@ -61,6 +87,36 @@ const BookAppointment = () => {
       navigate("/");
     }
   };
+
+  // --- שינוי: הצגת הודעה במקום הטופס אם יש תור עתידי ---
+  if (loadingFuture) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>קביעת תור</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-24 w-full bg-muted animate-pulse rounded" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (hasFutureAppointment) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>קביעת תור</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-yellow-100 text-yellow-800 p-3 rounded mb-4 text-center">
+            כבר יש לך תור עתידי פעיל. לא ניתן לקבוע תור נוסף עד שהתור יסתיים או יבוטל.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  // --- סוף שינוי ---
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-2xl">

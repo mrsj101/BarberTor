@@ -48,7 +48,7 @@ export const AppointmentActions = ({ appointment, onUpdate }: Props) => {
   const [isCancelOpen, setIsCancelOpen] = useState(false);
 
   const handleStatusChange = async (
-    newStatus: "pending" | "approved" | "rejected" | "cancelled" | "completed"
+    newStatus: AppointmentWithDetails['status']
   ) => {
     const { error } = await supabase
       .from("appointments")
@@ -76,15 +76,28 @@ export const AppointmentActions = ({ appointment, onUpdate }: Props) => {
       .update({
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
-        status: "pending", // Reset status to pending for re-confirmation
+        status: "client_approval_pending", // Status for client to approve the new time
       })
       .eq("id", appointment.id);
 
     if (error) {
       showError(`שגיאה בשינוי מועד: ${error.message}`);
     } else {
-      showSuccess("מועד התור שונה וממתין לאישור מחדש");
+      showSuccess("הצעה לשינוי מועד נשלחה ללקוח");
       setIsRescheduleOpen(false);
+      onUpdate();
+    }
+  };
+
+  const handleDelete = async () => {
+    const { error } = await supabase
+      .from("appointments")
+      .delete()
+      .eq("id", appointment.id);
+    if (error) {
+      showError(`שגיאה במחיקת התור: ${error.message}`);
+    } else {
+      showSuccess("התור נמחק בהצלחה");
       onUpdate();
     }
   };
@@ -125,11 +138,11 @@ export const AppointmentActions = ({ appointment, onUpdate }: Props) => {
           </DropdownMenuSub>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            className="text-red-500 focus:text-red-500"
+            className="text-destructive focus:bg-destructive/20"
             onClick={() => setIsCancelOpen(true)}
           >
-            <Trash2 className="ml-2 h-4 w-4" />
-            <span>ביטול תור</span>
+            <Trash2 className="w-4 h-4 mr-2" />
+            מחק תור
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -158,19 +171,18 @@ export const AppointmentActions = ({ appointment, onUpdate }: Props) => {
       <AlertDialog open={isCancelOpen} onOpenChange={setIsCancelOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>אישור ביטול תור</AlertDialogTitle>
+            <AlertDialogTitle>אישור מחיקת תור</AlertDialogTitle>
             <AlertDialogDescription>
-              האם אתה בטוח שברצונך לבטל את התור? פעולה זו תשנה את סטטוס
-              התור ל"בוטל". לא ניתן לשחזר פעולה זו.
+              האם אתה בטוח שברצונך למחוק את התור? פעולה זו תמחק את התור לחלוטין מהמערכת. לא ניתן לשחזר פעולה זו.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>חזרה</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => handleStatusChange("cancelled")}
+              onClick={handleDelete}
             >
-              כן, בטל את התור
+              כן, מחק את התור
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

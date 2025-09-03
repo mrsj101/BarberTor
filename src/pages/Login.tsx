@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -18,31 +17,36 @@ const Login = () => {
     setError(null);
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError("האימייל או הסיסמה שגויים");
-    } else {
-      navigate("/");
+      if (error) {
+        setError(error.message || "האימייל או הסיסמה שגויים");
+      } else {
+        // The onAuthStateChange listener in SessionContext will handle the redirect
+        // and profile fetching. We just need to wait for the session to be established.
+        // Navigating immediately can sometimes cause race conditions.
+        // A simple navigation to home should be fine as ProtectedRoute will handle it.
+        navigate("/");
+      }
+    } catch (e: any) {
+      console.error("An unexpected error occurred during login:", e);
+      setError(e.message || "אירעה שגיאה בלתי צפויה. אנא נסה שוב.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Card className="w-full max-w-md mx-4">
-        <CardHeader>
-          <CardTitle className="text-center text-2xl">
-            Daniel Tapiró | Barber
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div className="welcome-screen">
+      <div className="welcome-container">
+        <div className="welcome-text-box">
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">אימייל</Label>
+              <Label htmlFor="email" className="welcome-tagline">אימייל</Label>
               <Input
                 id="email"
                 type="email"
@@ -54,7 +58,7 @@ const Login = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">סיסמה</Label>
+              <Label htmlFor="password" className="welcome-tagline">סיסמה</Label>
               <Input
                 id="password"
                 type="password"
@@ -65,19 +69,19 @@ const Login = () => {
                 autoComplete="current-password"
               />
             </div>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {error && <p className="text-red-500 text-sm welcome-tagline">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "מתחבר..." : "התחברות"}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm">
-            <span>משתמש חדש? </span>
-            <Link to="/signup" className="underline text-primary">
+          <div className="mt-4 text-center text-sm welcome-tagline">
+            <span>משתמש חדש? </span><br/>
+            <Link to="/signup" className="underline text-primary welcome-tagline">
               הרשמה
             </Link>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

@@ -13,6 +13,7 @@ export const statusStyles: { [key: string]: string } = {
   rejected: "bg-red-500/20 text-red-400 border-red-500/30",
   cancelled: "bg-gray-500/20 text-gray-400 border-gray-500/30",
   completed: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  client_approval_pending: "bg-purple-500/20 text-purple-400 border-purple-500/30",
 };
 
 export const statusText: { [key: string]: string } = {
@@ -21,6 +22,7 @@ export const statusText: { [key: string]: string } = {
   rejected: "נדחה",
   cancelled: "בוטל",
   completed: "הושלם",
+  client_approval_pending: "ממתין לאישור לקוח",
 };
 
 export const columns = (
