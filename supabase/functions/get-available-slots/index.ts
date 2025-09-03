@@ -8,7 +8,7 @@ import {
   isBefore,
   addMinutes,
   isAfter,
-} from "https://deno.land/x/date_fns@v2.22.1/index.js";
+} from "https://deno.land/x/date_fns@v2.30.0/index.js";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
