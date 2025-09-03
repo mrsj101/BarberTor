@@ -8,6 +8,7 @@ import {
   isBefore,
   addMinutes,
   isAfter,
+  isToday,
 } from "https://esm.sh/date-fns@2.30.0";
 
 const corsHeaders = {
@@ -60,6 +61,7 @@ serve(async (req) => {
 
     const dayStart = startOfDay(date);
     const dayEnd = endOfDay(date);
+    const isSelectedDateToday = isToday(dayStart);
 
     const { data: appointments, error: appointmentsError } = await supabaseAdmin
       .from("appointments")
@@ -103,7 +105,10 @@ serve(async (req) => {
         break;
       }
 
-      const isFutureSlot = isAfter(currentTime, new Date());
+      let isFutureSlot = true;
+      if (isSelectedDateToday) {
+        isFutureSlot = isAfter(currentTime, new Date());
+      }
 
       const isOverlapping = busySlots.some(busySlot => {
         return isBefore(currentTime, busySlot.end) && isAfter(slotEnd, busySlot.start);
@@ -114,7 +119,7 @@ serve(async (req) => {
         available: !isOverlapping && isFutureSlot,
       });
 
-      currentTime = addMinutes(currentTime, 15); // Generate slots every 15 minutes
+      currentTime = addMinutes(currentTime, 15);
     }
 
     return new Response(JSON.stringify(allSlots), {
