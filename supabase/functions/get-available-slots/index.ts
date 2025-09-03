@@ -20,6 +20,7 @@ type WorkingHours = {
 };
 
 type TimeRange = { start: Date; end: Date };
+type Slot = { time: string; available: boolean };
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -30,13 +31,11 @@ serve(async (req) => {
     const { date: dateString, serviceDuration } = await req.json();
     const date = new Date(dateString);
 
-    // Use the SERVICE_ROLE_KEY to bypass RLS
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Fetch business settings inside the function
     const { data: settingsData, error: settingsError } = await supabaseAdmin
       .from("business_settings")
       .select("working_hours, buffer_minutes")
@@ -90,7 +89,7 @@ serve(async (req) => {
       })),
     ];
 
-    const availableSlots: Date[] = [];
+    const allSlots: Slot[] = [];
     const [startHour, startMinute] = dayWorkingHours.start.split(":").map(Number);
     const [endHour, endMinute] = dayWorkingHours.end.split(":").map(Number);
 
@@ -110,14 +109,15 @@ serve(async (req) => {
         return isBefore(currentTime, busySlot.end) && isAfter(slotEnd, busySlot.start);
       });
 
-      if (!isOverlapping && isFutureSlot) {
-        availableSlots.push(currentTime);
-      }
+      allSlots.push({
+        time: currentTime.toISOString(),
+        available: !isOverlapping && isFutureSlot,
+      });
 
-      currentTime = addMinutes(currentTime, 15);
+      currentTime = addMinutes(currentTime, 15); // Generate slots every 15 minutes
     }
 
-    return new Response(JSON.stringify(availableSlots), {
+    return new Response(JSON.stringify(allSlots), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });

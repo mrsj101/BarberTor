@@ -13,15 +13,20 @@ type Props = {
   onBack: () => void;
 };
 
+type Slot = {
+  time: string;
+  available: boolean;
+};
+
 export const TimeSlotSelector = ({ service, onSelectTime, onBack }: Props) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [slots, setSlots] = useState<Date[]>([]);
+  const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!date) return;
 
-    const fetchAndGenerateSlots = async () => {
+    const fetchSlots = async () => {
       setLoading(true);
       setSlots([]);
       
@@ -37,8 +42,7 @@ export const TimeSlotSelector = ({ service, onSelectTime, onBack }: Props) => {
           throw error;
         }
 
-        const availableSlots = data.map((slot: string) => new Date(slot));
-        setSlots(availableSlots);
+        setSlots(data);
 
       } catch (error) {
         console.error("Error fetching available slots:", error);
@@ -48,13 +52,8 @@ export const TimeSlotSelector = ({ service, onSelectTime, onBack }: Props) => {
       }
     };
 
-    fetchAndGenerateSlots();
+    fetchSlots();
   }, [date, service.duration_minutes]);
-
-  const dayOfWeek = useMemo(() => {
-    if (!date) return "";
-    return date.toLocaleDateString("en-US", { weekday: 'long' }).toLowerCase();
-  }, [date]);
 
   return (
     <Card>
@@ -80,10 +79,16 @@ export const TimeSlotSelector = ({ service, onSelectTime, onBack }: Props) => {
             {date ? date.toLocaleDateString("he-IL", { weekday: 'long', month: 'long', day: 'numeric' }) : "בחר תאריך"}
           </h3>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {loading && Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+            {loading && Array.from({ length: 12 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
             {!loading && slots.length > 0 && slots.map((slot) => (
-              <Button key={slot.toISOString()} variant="outline" onClick={() => onSelectTime(slot)}>
-                {slot.toLocaleTimeString("he-IL", { hour: '2-digit', minute: '2-digit' })}
+              <Button 
+                key={slot.time} 
+                variant="outline" 
+                onClick={() => onSelectTime(new Date(slot.time))}
+                disabled={!slot.available}
+                className={!slot.available ? "bg-muted text-muted-foreground line-through cursor-not-allowed" : ""}
+              >
+                {new Date(slot.time).toLocaleTimeString("he-IL", { hour: '2-digit', minute: '2-digit' })}
               </Button>
             ))}
             {!loading && slots.length === 0 && date && (
