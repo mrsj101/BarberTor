@@ -6,6 +6,7 @@ const Welcome = lazy(() => import("./pages/Welcome"));
 const Home = lazy(() => import("./pages/Home"));
 const Login = lazy(() => import("./pages/Login"));
 const SignUp = lazy(() => import("./pages/SignUp"));
+const EmailConfirmed = lazy(() => import("./pages/EmailConfirmed"));
 import NotFound from "./pages/NotFound";
 import BookAppointment from "./pages/client/BookAppointment";
 import RebookAppointment from "./pages/client/RebookAppointment";
@@ -56,6 +57,7 @@ const App = () => {
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/email-confirmed" element={<EmailConfirmed />} />
         
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>

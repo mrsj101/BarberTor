@@ -18,23 +18,23 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
         setError(error.message || "האימייל או הסיסמה שגויים");
+      } else if (data.user && !data.user.email_confirmed_at) {
+        await supabase.auth.signOut();
+        setError("יש לאשר את האימייל לפני התחברות.");
       } else {
-        // The onAuthStateChange listener in SessionContext will handle the redirect
-        // and profile fetching. We just need to wait for the session to be established.
-        // Navigating immediately can sometimes cause race conditions.
-        // A simple navigation to home should be fine as ProtectedRoute will handle it.
         navigate("/");
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("An unexpected error occurred during login:", e);
-      setError(e.message || "אירעה שגיאה בלתי צפויה. אנא נסה שוב.");
+      const message = e instanceof Error ? e.message : "אירעה שגיאה בלתי צפויה. אנא נסה שוב.";
+      setError(message);
     } finally {
       setLoading(false);
     }

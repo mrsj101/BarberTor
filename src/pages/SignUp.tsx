@@ -12,7 +12,10 @@ const SignUp = () => {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [birthDate, setBirthDate] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [birthDay, setBirthDay] = useState("");
+  const [birthMonth, setBirthMonth] = useState("");
+  const [birthYear, setBirthYear] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -25,7 +28,7 @@ const SignUp = () => {
       setError("יש לאשר את תנאי השימוש והסכמה לדיוור.");
       return;
     }
-    if (!firstName || !lastName || !phone || !email || !birthDate) {
+    if (!firstName || !lastName || !phone || !email || !birthDay || !birthMonth || !birthYear) {
       setError("יש למלא את כל השדות.");
       return;
     }
@@ -33,6 +36,13 @@ const SignUp = () => {
       setError("סיסמה חייבת לכלול 6 תווים לפחות");
       return;
     }
+    if (password !== confirmPassword) {
+      setError("הסיסמאות אינן תואמות");
+      return;
+    }
+
+    const formattedBirthDate = `${birthYear.padStart(4, "0")}-${birthMonth.padStart(2, "0")}-${birthDay.padStart(2, "0")}`;
+
 
     setLoading(true);
 
@@ -45,10 +55,10 @@ const SignUp = () => {
             first_name: firstName,
             last_name: lastName,
             phone: phone,
-            birth_date: birthDate,
+            birth_date: formattedBirthDate,
             full_name: `${firstName} ${lastName}`,
           },
-          emailRedirectTo: `${window.location.origin}/login`,
+          emailRedirectTo: `${import.meta.env.VITE_SITE_URL || window.location.origin}/email-confirmed`,
         },
       });
       
@@ -64,9 +74,10 @@ const SignUp = () => {
         alert("נשלח אליך אימייל אימות. יש לאשר אותו כדי להשלים את ההרשמה.");
         navigate("/login");
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("An unexpected error occurred during sign up:", e);
-      setError(e.message || "אירעה שגיאה בלתי צפויה. אנא נסה שוב.");
+      const message = e instanceof Error ? e.message : "אירעה שגיאה בלתי צפויה. אנא נסה שוב.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -75,7 +86,7 @@ const SignUp = () => {
   return (
     <div className="welcome-screen">
       <div className="welcome-container">
-        <div className="welcome-text-box max-w-sm mx-auto p-3">
+        <div className="welcome-text-box max-w-sm md:max-w-md mx-auto p-3">
           <form onSubmit={handleSignUp} className="space-y-2">
             <div className="space-y-1">
               <Label htmlFor="firstName" className="welcome-tagline text-sm">שם פרטי</Label>
@@ -124,15 +135,42 @@ const SignUp = () => {
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="birthDate" className="welcome-tagline text-sm">תאריך לידה</Label>
-              <Input
-                id="birthDate"
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                required
-                className="h-8"
-              />
+              <Label className="welcome-tagline text-sm">תאריך לידה</Label>
+              <div className="grid grid-cols-3 gap-2">
+                <Input
+                  id="birthDay"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="יום"
+                  maxLength={2}
+                  value={birthDay}
+                  onChange={(e) => setBirthDay(e.target.value)}
+                  required
+                  className="h-8 text-center"
+                />
+                <Input
+                  id="birthMonth"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="חודש"
+                  maxLength={2}
+                  value={birthMonth}
+                  onChange={(e) => setBirthMonth(e.target.value)}
+                  required
+                  className="h-8 text-center"
+                />
+                <Input
+                  id="birthYear"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="שנה"
+                  maxLength={4}
+                  value={birthYear}
+                  onChange={(e) => setBirthYear(e.target.value)}
+                  required
+                  className="h-8 text-center"
+                />
+              </div>
             </div>
             <div className="space-y-1">
               <Label htmlFor="password" className="welcome-tagline text-sm">סיסמה</Label>
@@ -141,6 +179,18 @@ const SignUp = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+                className="h-8"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="confirmPassword" className="welcome-tagline text-sm">אימות סיסמה</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 autoComplete="new-password"
                 className="h-8"
@@ -160,7 +210,7 @@ const SignUp = () => {
               </Label>
             </div>
             <div className="text-xs text-white bg-black/30 p-2 rounded mt-2">
-              <b>דיסקליימר:</b> בהרשמה לאתר אתה מאשר קבלת דיוור, עדכונים ומידע שיווקי בהתאם לחוק הספאם. תוכל להסיר את עצמך מרשימת התפוצה בכל עת.
+              בהרשמה לאתר אתה מאשר קבלת דיוור, עדכונים ומידע שיווקי בהתאם לחוק הספאם. תוכל להסיר את עצמך מרשימת התפוצה בכל עת.
             </div>
             {error && <p className="text-red-500 text-xs welcome-tagline bg-black/30 p-1 rounded">{error}</p>}
             <Button type="submit" className="w-full h-8 mt-2" disabled={loading}>
