@@ -91,13 +91,11 @@ export const generateAvailableSlots = async ({
     // Check if the current time is in the future
     const isFutureSlot = isAfter(currentTime, new Date());
 
-    // Check for overlaps with busy slots
-    const isOverlapping = busySlots.some(busySlot =>
-      (isAfter(currentTime, busySlot.start) && isBefore(currentTime, busySlot.end)) ||
-      (isAfter(slotEnd, busySlot.start) && isBefore(slotEnd, busySlot.end)) ||
-      (isBefore(currentTime, busySlot.start) && isAfter(slotEnd, busySlot.end)) ||
-      (currentTime.getTime() === busySlot.start.getTime())
-    );
+    // Check for overlaps with busy slots using a more robust method
+    const isOverlapping = busySlots.some(busySlot => {
+      // Overlap condition: (StartA < EndB) and (EndA > StartB)
+      return isBefore(currentTime, busySlot.end) && isAfter(slotEnd, busySlot.start);
+    });
 
     if (!isOverlapping && isFutureSlot) {
       availableSlots.push(currentTime);

@@ -23,7 +23,7 @@ const CalendarPage = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("appointments")
-      .select("id, start_time, end_time, status, profiles(first_name), services(name)")
+      .select("id, start_time, end_time, status, profiles(*), services(*)")
       .gte("start_time", monthInterval.start.toISOString())
       .lte("start_time", monthInterval.end.toISOString())
       .order("start_time", { ascending: true });

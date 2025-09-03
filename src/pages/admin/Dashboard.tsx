@@ -35,7 +35,7 @@ const Dashboard = () => {
     // שליפת תורים
     const { data: appointmentsData, error: appointmentsError } = await supabase
       .from("appointments")
-      .select("id, start_time, end_time, created_at, status, profiles(first_name), services(name)")
+      .select("id, start_time, end_time, created_at, status, profiles(*), services(*)")
       .order("created_at", { ascending: false });
 
     // שליפת בקשות לדחיית תור
@@ -83,7 +83,7 @@ const Dashboard = () => {
       setTodayItems(
         todayDisplayItems.slice(0, 5).map(a => ({
           id: a.id,
-          primaryText: a.profiles?.[0]?.first_name || "לקוח",
+          primaryText: a.profiles?.first_name || "לקוח",
           secondaryText: todaysUpcoming.length > 0 
             ? format(new Date(a.start_time), 'HH:mm')
             : format(new Date(a.start_time), 'EEE, HH:mm', { locale: he })
@@ -93,7 +93,7 @@ const Dashboard = () => {
       setWeekItems(
         weeksUpcoming.slice(0, 5).map(a => ({
           id: a.id,
-          primaryText: a.profiles?.[0]?.first_name || "לקוח",
+          primaryText: a.profiles?.first_name || "לקוח",
           secondaryText: format(new Date(a.start_time), 'EEE, HH:mm', { locale: he })
         }))
       );

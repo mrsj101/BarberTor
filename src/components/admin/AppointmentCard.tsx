@@ -8,8 +8,8 @@ export type Appointment = {
   start_time: string;
   end_time: string;
   status: "pending" | "approved" | "rejected" | "cancelled";
-  profiles: { first_name: string | null }[] | null;
-  services: { name: string | null }[] | null;
+  profiles: { first_name: string | null } | null;
+  services: { name: string | null } | null;
 };
 
 type Props = {
@@ -37,8 +37,8 @@ const getStatusBorderColor = (status: Appointment['status']) => {
 
 export const AppointmentCard = ({ appointment, onUpdate }: Props) => {
   const statusInfo = statusStyles[appointment.status];
-  const clientName = appointment.profiles?.[0]?.first_name || "לקוח";
-  const serviceName = appointment.services?.[0]?.name || "שירות לא ידוע";
+  const clientName = appointment.profiles?.first_name || "לקוח";
+  const serviceName = appointment.services?.name || "שירות לא ידוע";
 
   return (
     <Card className={`mb-4 bg-muted/50 border-l-4 ${getStatusBorderColor(appointment.status)}`}>

@@ -12,7 +12,7 @@ export const PendingAppointmentsList = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("appointments")
-      .select("id, start_time, end_time, status, profiles(first_name), services(name)")
+      .select("id, start_time, end_time, status, profiles(*), services(*)")
       .eq("status", "pending")
       .order("start_time", { ascending: true });
 
