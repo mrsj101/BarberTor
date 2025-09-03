@@ -8,7 +8,7 @@ const Login = lazy(() => import("./pages/Login"));
 const SignUp = lazy(() => import("./pages/SignUp"));
 import NotFound from "./pages/NotFound";
 import BookAppointment from "./pages/client/BookAppointment";
-import RescheduleAppointment from "./pages/client/RescheduleAppointment";
+import RebookAppointment from "./pages/client/RebookAppointment";
 import CancelAppointment from "./pages/client/CancelAppointment";
 import AdminLayout from "./components/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
@@ -61,7 +61,7 @@ const App = () => {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Home />} />
           <Route path="/book" element={<BookAppointment />} />
-          <Route path="/reschedule" element={<RescheduleAppointment />} />
+          <Route path="/rebook" element={<RebookAppointment />} />
           <Route path="/cancel" element={<CancelAppointment />} />
           
           {/* Protected Admin Routes */}

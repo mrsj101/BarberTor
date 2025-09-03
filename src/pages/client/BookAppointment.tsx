@@ -25,8 +25,6 @@ const BookAppointment = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useSession();
   const navigate = useNavigate();
-
-  // --- שינוי: בדיקת תור עתידי פעיל ---
   const [hasFutureAppointment, setHasFutureAppointment] = useState(false);
   const [loadingFuture, setLoadingFuture] = useState(true);
 
@@ -50,54 +48,55 @@ const BookAppointment = () => {
     };
     fetchAppointments();
   }, [user]);
-  // --- סוף שינוי ---
-
-  const handleServiceSelect = (service: Service) => {
-    setSelectedService(service);
-    setStep(2);
-  };
-
-  const handleTimeSelect = (time: Date) => {
-    setSelectedTime(time);
-    setStep(3);
-  };
 
   const handleSubmit = async () => {
     if (!selectedService || !selectedTime || !user) return;
 
     setIsSubmitting(true);
-    const startTime = selectedTime;
-    const endTime = addMinutes(startTime, selectedService.duration_minutes);
+    
+    try {
+      // Fetch auto-approval setting
+      const { data: settings, error: settingsError } = await supabase
+        .from("business_settings")
+        .select("auto_approve_appointments")
+        .single();
 
-    const { error } = await supabase.from("appointments").insert({
-      user_id: user.id,
-      service_id: selectedService.id,
-      start_time: startTime.toISOString(),
-      end_time: endTime.toISOString(),
-      status: "pending",
-      notes: notes,
-    });
+      if (settingsError) {
+        throw new Error("Failed to fetch business settings.");
+      }
 
-    setIsSubmitting(false);
+      const autoApprove = settings?.auto_approve_appointments || false;
+      const startTime = selectedTime;
+      const endTime = addMinutes(startTime, selectedService.duration_minutes);
 
-    if (error) {
-      showError(`שגיאה בקביעת התור: ${error.message}`);
-    } else {
-      showSuccess("התור נקבע בהצלחה וממתין לאישור");
+      const { error } = await supabase.from("appointments").insert({
+        user_id: user.id,
+        service_id: selectedService.id,
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        status: autoApprove ? "approved" : "pending",
+        notes: notes,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      showSuccess(autoApprove ? "התור נקבע ואושר בהצלחה!" : "התור נקבע בהצלחה וממתין לאישור");
       navigate("/");
+
+    } catch (error: any) {
+      showError(`שגיאה בקביעת התור: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // --- שינוי: הצגת הודעה במקום הטופס אם יש תור עתידי ---
   if (loadingFuture) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>קביעת תור</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-24 w-full bg-muted animate-pulse rounded" />
-        </CardContent>
+        <CardHeader><CardTitle>קביעת תור</CardTitle></CardHeader>
+        <CardContent><div className="h-24 w-full bg-muted animate-pulse rounded" /></CardContent>
       </Card>
     );
   }
@@ -105,9 +104,7 @@ const BookAppointment = () => {
   if (hasFutureAppointment) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>קביעת תור</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>קביעת תור</CardTitle></CardHeader>
         <CardContent>
           <div className="bg-yellow-100 text-yellow-800 p-3 rounded mb-4 text-center">
             כבר יש לך תור עתידי פעיל. לא ניתן לקבוע תור נוסף עד שהתור יסתיים או יבוטל.
@@ -116,7 +113,6 @@ const BookAppointment = () => {
       </Card>
     );
   }
-  // --- סוף שינוי ---
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-2xl">
@@ -135,9 +131,7 @@ const BookAppointment = () => {
 
       {step === 3 && selectedService && selectedTime && (
         <Card>
-          <CardHeader>
-            <CardTitle>אישור פרטי התור</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>אישור פרטי התור</CardTitle></CardHeader>
           <CardContent className="space-y-6">
             <div>
               <p className="font-bold text-lg">{selectedService.name}</p>

@@ -5,9 +5,9 @@ import { he } from "date-fns/locale";
 import { DashboardStatCard } from "@/components/admin/DashboardStatCard";
 import { RecentRequestsPreview } from "@/components/admin/RecentRequestsPreview";
 import { TodaysAgenda } from "@/components/admin/TodaysAgenda";
-import { CalendarCheck, Mail, Calendar as CalendarIcon, Clock } from "lucide-react";
+import { CalendarCheck, Mail, Calendar as CalendarIcon } from "lucide-react";
 import type { Appointment } from "@/components/admin/AppointmentCard";
-import { RescheduleRequestsManager } from "@/components/admin/RescheduleRequestsManager";
+import { AutoApprovalManager } from "@/components/admin/AutoApprovalManager";
 
 type Item = {
   id: string;
@@ -16,7 +16,7 @@ type Item = {
 };
 
 const Dashboard = () => {
-  const [stats, setStats] = useState({ pending: 0, today: 0, week: 0, rescheduleRequests: 0 });
+  const [stats, setStats] = useState({ pending: 0, today: 0, week: 0 });
   const [allAppointments, setAllAppointments] = useState<Appointment[]>([]);
   const [todayItems, setTodayItems] = useState<Item[]>([]);
   const [weekItems, setWeekItems] = useState<Item[]>([]);
@@ -32,24 +32,13 @@ const Dashboard = () => {
     const weekStart = startOfWeek(now, { weekStartsOn: 0 }); // Sunday
     const weekEnd = endOfWeek(now, { weekStartsOn: 0 });
 
-    // שליפת תורים
     const { data: appointmentsData, error: appointmentsError } = await supabase
       .from("appointments")
       .select("id, start_time, end_time, created_at, status, profiles(*), services(*)")
       .order("created_at", { ascending: false });
 
-    // שליפת בקשות לדחיית תור
-    const { data: rescheduleData, error: rescheduleError } = await supabase
-      .from("reschedule_requests")
-      .select("id, status, created_at")
-      .eq("status", "pending");
-
     if (appointmentsError) {
       console.error("Error fetching appointments:", appointmentsError);
-    }
-    
-    if (rescheduleError) {
-      console.error("Error fetching reschedule requests:", rescheduleError);
     }
 
     if (appointmentsData) {
@@ -59,13 +48,10 @@ const Dashboard = () => {
       const todaysApproved = typedData.filter(a => new Date(a.start_time) >= todayStart && new Date(a.start_time) <= todayEnd && a.status === 'approved');
       const weekApproved = typedData.filter(a => new Date(a.start_time) >= weekStart && new Date(a.start_time) <= weekEnd && a.status === 'approved');
       
-      const rescheduleCount = rescheduleData ? rescheduleData.length : 0;
-      
       setStats({ 
         pending: pending.length, 
         today: todaysApproved.length, 
         week: weekApproved.length,
-        rescheduleRequests: rescheduleCount
       });
       
       setAllAppointments(typedData);
@@ -109,7 +95,7 @@ const Dashboard = () => {
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-center md:text-right">דשבורד ניהול</h1>
       <div className="grid gap-4 md:grid-cols-4">
-        <DashboardStatCard title="הזמנות ממתינות" value={stats.pending} icon={Mail} isLoading={loading} />
+        <DashboardStatCard title="הזמנות ממתינות" value={stats.pending} icon={Mail} isLoading={loading} linkTo="/admin/requests" linkText="עבור לאישור תורים" />
         <DashboardStatCard 
           title="תורים להיום" 
           value={stats.today} 
@@ -128,17 +114,7 @@ const Dashboard = () => {
           listTitle="התורים הבאים השבוע:"
           emptyStateMessage="אין תורים קרובים השבוע."
         />
-        <DashboardStatCard 
-          title="בקשות לתיאום מחדש" 
-          value={stats.rescheduleRequests} 
-          icon={Clock} 
-          isLoading={loading}
-          items={[]}
-          listTitle=""
-          emptyStateMessage="אין בקשות ממתינות."
-          linkTo="/admin/requests"
-          linkText="לניהול בקשות"
-        />
+        <AutoApprovalManager isCompact={true} />
       </div>
       {/* הזמנות */}
       <div className="grid gap-8 lg:grid-cols-3">
@@ -149,11 +125,6 @@ const Dashboard = () => {
         <div>
           <TodaysAgenda />
         </div>
-      </div>
-      {/* בקשות לתיאום מחדש */}
-      <div>
-        <h2 className="text-2xl font-semibold mb-4 text-right">בקשות לתיאום מחדש</h2>
-        <RescheduleRequestsManager />
       </div>
     </div>
   );

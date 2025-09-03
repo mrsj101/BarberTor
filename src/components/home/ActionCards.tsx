@@ -9,9 +9,9 @@ const actions = [
     href: "/book",
   },
   {
-    title: "דחיית תור",
+    title: "תיאום תור מחדש",
     icon: <CalendarClock className="w-10 h-10 text-primary mb-2" />,
-    href: "/reschedule",
+    href: "/rebook",
   },
   {
     title: "ביטול תור",
