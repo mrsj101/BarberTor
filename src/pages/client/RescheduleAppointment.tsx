@@ -11,6 +11,7 @@ import { showError, showSuccess } from "@/utils/toast";
 import { Link } from "react-router-dom";
 import { Calendar, Clock, AlertCircle } from "lucide-react";
 import { Calendar as UiCalendar } from "@/components/ui/calendar";
+import { he } from "date-fns/locale";
 
 type AppointmentStatus = "pending" | "approved" | "rejected" | "cancelled" | "completed" | "client_approval_pending";
 
@@ -454,6 +455,7 @@ const RescheduleAppointment = () => {
                                     </label>
                                     <div className="flex justify-center">
                                       <UiCalendar
+                                        locale={he}
                                         mode="single"
                                         selected={newDate}
                                         onSelect={setNewDate}

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, addMonths, subMonths, format } from "date-fns";
+import { he } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Appointment } from "@/components/admin/AppointmentCard";
 import { CalendarToolbar } from "@/components/admin/CalendarToolbar";
@@ -92,6 +93,7 @@ const CalendarPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-1 flex justify-center">
           <Calendar
+            locale={he}
             mode="single"
             selected={selectedDate}
             onSelect={setSelectedDate}

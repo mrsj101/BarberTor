@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "../ui/skeleton";
 import type { Service } from "@/pages/client/BookAppointment";
 import { showError } from "@/utils/toast";
+import { he } from "date-fns/locale";
 
 type Props = {
   service: Service;
@@ -73,6 +74,7 @@ export const TimeSlotSelector = ({ service, onSelectTime, onBack }: Props) => {
       <CardContent className="flex flex-col md:flex-row gap-8">
         <div className="flex justify-center">
           <Calendar
+            locale={he}
             mode="single"
             selected={date}
             onSelect={setDate}
