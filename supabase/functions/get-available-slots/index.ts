@@ -5,8 +5,8 @@ import {
   addMinutes,
   isAfter,
   format,
-} from "https://esm.sh/date-fns@2.30.0";
-import { zonedTimeToUtc, utcToZonedTime } from "https://esm.sh/date-fns-tz@2.0.0";
+} from "npm:date-fns@2.30.0";
+import { zonedTimeToUtc, utcToZonedTime } from "npm:date-fns-tz@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
