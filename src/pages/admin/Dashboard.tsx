@@ -53,7 +53,7 @@ const Dashboard = () => {
     }
 
     if (appointmentsData) {
-      const typedData = appointmentsData as Appointment[];
+      const typedData = appointmentsData as unknown as Appointment[];
       
       const pending = typedData.filter(a => a.status === 'pending');
       const todaysApproved = typedData.filter(a => new Date(a.start_time) >= todayStart && new Date(a.start_time) <= todayEnd && a.status === 'approved');
@@ -83,7 +83,7 @@ const Dashboard = () => {
       setTodayItems(
         todayDisplayItems.slice(0, 5).map(a => ({
           id: a.id,
-          primaryText: a.profiles?.first_name || "לקוח",
+          primaryText: a.profiles?.[0]?.first_name || "לקוח",
           secondaryText: todaysUpcoming.length > 0 
             ? format(new Date(a.start_time), 'HH:mm')
             : format(new Date(a.start_time), 'EEE, HH:mm', { locale: he })
@@ -93,7 +93,7 @@ const Dashboard = () => {
       setWeekItems(
         weeksUpcoming.slice(0, 5).map(a => ({
           id: a.id,
-          primaryText: a.profiles?.first_name || "לקוח",
+          primaryText: a.profiles?.[0]?.first_name || "לקוח",
           secondaryText: format(new Date(a.start_time), 'EEE, HH:mm', { locale: he })
         }))
       );
