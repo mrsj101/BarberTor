@@ -21,6 +21,7 @@ type Appointment = {
   id: string;
   service_id: string;
   start_time: string;
+  created_at: string;
   end_time: string;
   status: AppointmentStatus;
   services: { name: string; duration_minutes: number };
@@ -31,11 +32,16 @@ type Slot = {
   available: boolean;
 };
 
+type Policy = {
+  hours: number;
+  graceMinutes: number;
+};
+
 const RebookAppointment = () => {
   const { user } = useSession();
   const navigate = useNavigate();
   const [appointment, setAppointment] = useState<Appointment | null>(null);
-  const [policyHours, setPolicyHours] = useState(12);
+  const [policy, setPolicy] = useState<Policy>({ hours: 12, graceMinutes: 30 });
   const [loading, setLoading] = useState(true);
   const [isRebooking, setIsRebooking] = useState(false);
   const [notes, setNotes] = useState("");
@@ -51,7 +57,7 @@ const RebookAppointment = () => {
     try {
       const appointmentPromise = supabase
         .from("appointments")
-        .select("id, service_id, start_time, end_time, status, services(name, duration_minutes)")
+        .select("id, service_id, start_time, created_at, end_time, status, services(name, duration_minutes)")
         .eq("user_id", user.id)
         .eq("status", "approved")
         .gte("start_time", new Date().toISOString())
@@ -61,7 +67,7 @@ const RebookAppointment = () => {
 
       const settingsPromise = supabase
         .from("business_settings")
-        .select("cancellation_policy_hours")
+        .select("rebooking_hours_before, rebooking_grace_period_minutes")
         .single();
 
       const [{ data: appointmentData, error: appointmentError }, { data: settingsData, error: settingsError }] = await Promise.all([appointmentPromise, settingsPromise]);
@@ -70,7 +76,10 @@ const RebookAppointment = () => {
       if (settingsError) console.warn("Could not fetch settings, using default.");
 
       setAppointment(appointmentData as Appointment | null);
-      setPolicyHours(settingsData?.cancellation_policy_hours || 12);
+      setPolicy({
+        hours: settingsData?.rebooking_hours_before || 12,
+        graceMinutes: settingsData?.rebooking_grace_period_minutes || 30,
+      });
 
     } catch (error: any) {
       showError("שגיאה בטעינת התור שלך.");
@@ -176,8 +185,14 @@ const RebookAppointment = () => {
   };
 
   const hoursUntil = appointment ? differenceInHours(new Date(appointment.start_time), new Date()) : 0;
-  const canRebook = appointment ? hoursUntil >= policyHours : false;
-  const tooltipMessage = `לא ניתן לתאם מחדש פחות מ-${policyHours} שעות לפני מועד התור.`;
+  const isBeforeDeadline = appointment ? hoursUntil >= policy.hours : false;
+
+  const appointmentCreatedAt = appointment ? new Date(appointment.created_at) : new Date();
+  const gracePeriodEnd = appointment ? addMinutes(appointmentCreatedAt, policy.graceMinutes) : new Date();
+  const isWithinGracePeriod = new Date() < gracePeriodEnd;
+
+  const canRebook = isBeforeDeadline || isWithinGracePeriod;
+  const tooltipMessage = `לא ניתן לתאם מחדש פחות מ-${policy.hours} שעות לפני התור, ותקופת החסד (${policy.graceMinutes} דקות) הסתיימה.`;
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
@@ -200,7 +215,7 @@ const RebookAppointment = () => {
                   <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                   <div className="text-right text-sm text-blue-800">
                     <p className="font-medium">מדיניות תיאום מחדש</p>
-                    <p>ניתן לתאם מחדש עד {policyHours} שעות לפני מועד התור. בחירת מועד חדש תבטל את תורך הנוכחי ותקבע תור חדש במקומו.</p>
+                    <p>ניתן לתאם מחדש עד {policy.hours} שעות לפני מועד התור, או בתוך {policy.graceMinutes} דקות מרגע קביעת התור. בחירת מועד חדש תבטל את תורך הנוכחי.</p>
                   </div>
                 </div>
               </div>

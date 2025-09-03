@@ -7,19 +7,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/contexts/SessionContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { Link } from "react-router-dom";
-import { differenceInHours } from "date-fns";
+import { differenceInHours, addMinutes } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type Appointment = {
   id: string;
   start_time: string;
+  created_at: string;
   services: { name: string };
+};
+
+type Policy = {
+  hours: number;
+  graceMinutes: number;
 };
 
 const CancelAppointment = () => {
   const { user } = useSession();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [policyHours, setPolicyHours] = useState(12);
+  const [policy, setPolicy] = useState<Policy>({ hours: 12, graceMinutes: 30 });
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
@@ -29,7 +35,7 @@ const CancelAppointment = () => {
     try {
       const appointmentsPromise = supabase
         .from("appointments")
-        .select("id, start_time, services(name)")
+        .select("id, start_time, created_at, services(name)")
         .eq("user_id", user.id)
         .in("status", ["approved", "pending"])
         .gte("start_time", new Date().toISOString())
@@ -37,7 +43,7 @@ const CancelAppointment = () => {
 
       const settingsPromise = supabase
         .from("business_settings")
-        .select("cancellation_policy_hours")
+        .select("cancellation_hours_before, cancellation_grace_period_minutes")
         .single();
 
       const [{ data: appointmentsData, error: appointmentsError }, { data: settingsData, error: settingsError }] = await Promise.all([appointmentsPromise, settingsPromise]);
@@ -46,7 +52,10 @@ const CancelAppointment = () => {
       if (settingsError) console.warn("Could not fetch settings, using default.");
 
       setAppointments(appointmentsData as Appointment[] || []);
-      setPolicyHours(settingsData?.cancellation_policy_hours || 12);
+      setPolicy({
+        hours: settingsData?.cancellation_hours_before || 12,
+        graceMinutes: settingsData?.cancellation_grace_period_minutes || 30,
+      });
 
     } catch (error: any) {
       showError("שגיאה בטעינת התורים שלך.");
@@ -106,8 +115,14 @@ const CancelAppointment = () => {
           ) : (
             appointments.map(app => {
               const hoursUntil = differenceInHours(new Date(app.start_time), new Date());
-              const canCancel = hoursUntil >= policyHours;
-              const tooltipMessage = `לא ניתן לבטל פחות מ-${policyHours} שעות לפני מועד התור.`;
+              const isBeforeDeadline = hoursUntil >= policy.hours;
+
+              const appointmentCreatedAt = new Date(app.created_at);
+              const gracePeriodEnd = addMinutes(appointmentCreatedAt, policy.graceMinutes);
+              const isWithinGracePeriod = new Date() < gracePeriodEnd;
+
+              const canCancel = isBeforeDeadline || isWithinGracePeriod;
+              const tooltipMessage = `לא ניתן לבטל פחות מ-${policy.hours} שעות לפני התור, ותקופת החסד (${policy.graceMinutes} דקות) הסתיימה.`;
 
               return (
                 <div key={app.id} className="flex justify-between items-center p-4 bg-muted rounded-lg">

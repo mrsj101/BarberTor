@@ -1,48 +1,59 @@
 import { useState, useEffect, useCallback } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { showError, showSuccess } from "@/utils/toast";
 
+const policySchema = z.object({
+  cancellation_hours_before: z.coerce.number().min(0, "הערך חייב להיות חיובי"),
+  rebooking_hours_before: z.coerce.number().min(0, "הערך חייב להיות חיובי"),
+  cancellation_grace_period_minutes: z.coerce.number().min(0, "הערך חייב להיות חיובי"),
+  rebooking_grace_period_minutes: z.coerce.number().min(0, "הערך חייב להיות חיובי"),
+});
+
+type PolicySettings = z.infer<typeof policySchema>;
+
 export const PolicyManager = () => {
-  const [policyHours, setPolicyHours] = useState<number | string>("");
   const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const form = useForm<PolicySettings>({
+    resolver: zodResolver(policySchema),
+    defaultValues: {
+      cancellation_hours_before: 12,
+      rebooking_hours_before: 12,
+      cancellation_grace_period_minutes: 30,
+      rebooking_grace_period_minutes: 30,
+    },
+  });
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("business_settings")
-      .select("cancellation_policy_hours")
+      .select("cancellation_hours_before, rebooking_hours_before, cancellation_grace_period_minutes, rebooking_grace_period_minutes")
       .single();
 
     if (error) {
       showError("שגיאה בטעינת מדיניות הביטולים.");
     } else if (data) {
-      setPolicyHours(data.cancellation_policy_hours || 12);
+      form.reset(data);
     }
     setLoading(false);
-  }, []);
+  }, [form]);
 
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
 
-  const handleSaveChanges = async () => {
-    setIsSaving(true);
-    const hours = Number(policyHours);
-    if (isNaN(hours) || hours < 0) {
-      showError("ערך לא תקין. הזן מספר שעות חיובי.");
-      setIsSaving(false);
-      return;
-    }
-
+  const onSubmit = async (values: PolicySettings) => {
     const { error } = await supabase
       .from("business_settings")
-      .update({ cancellation_policy_hours: hours })
+      .update(values)
       .eq("id", 1);
 
     if (error) {
@@ -50,11 +61,10 @@ export const PolicyManager = () => {
     } else {
       showSuccess("מדיניות הביטולים והתיאום מחדש עודכנה!");
     }
-    setIsSaving(false);
   };
 
   if (loading) {
-    return <Card><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent><Skeleton className="h-20 w-full" /></CardContent></Card>;
+    return <Card><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent><Skeleton className="h-48 w-full" /></CardContent></Card>;
   }
 
   return (
@@ -62,27 +72,70 @@ export const PolicyManager = () => {
       <CardHeader>
         <CardTitle>מדיניות ביטול ותיאום מחדש</CardTitle>
         <CardDescription>
-          קבע כמה שעות מראש לקוח יכול לבטל או לתאם מחדש תור. הגדרה זו תחול על שני המקרים.
+          קבע את חוקי המערכת לביטול ותיאום מחדש של תורים על ידי לקוחות.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-4">
-          <Label htmlFor="policy-hours" className="whitespace-nowrap">שעות לפני התור:</Label>
-          <Input
-            id="policy-hours"
-            type="number"
-            value={policyHours}
-            onChange={(e) => setPolicyHours(e.target.value)}
-            className="w-32"
-            min="0"
-          />
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button onClick={handleSaveChanges} disabled={isSaving}>
-          {isSaving ? "שומר..." : "שמור מדיניות"}
-        </Button>
-      </CardFooter>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardContent className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6 p-4 border rounded-lg">
+              <h3 className="md:col-span-2 font-semibold text-lg">מגבלת זמן לפני התור</h3>
+              <FormField
+                control={form.control}
+                name="cancellation_hours_before"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ביטול תור (שעות לפני)</FormLabel>
+                    <Input type="number" {...field} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="rebooking_hours_before"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>תיאום מחדש (שעות לפני)</FormLabel>
+                    <Input type="number" {...field} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid md:grid-cols-2 gap-6 p-4 border rounded-lg">
+              <h3 className="md:col-span-2 font-semibold text-lg">תקופת חסד לאחר קביעת התור</h3>
+              <FormField
+                control={form.control}
+                name="cancellation_grace_period_minutes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ביטול תור (דקות אחרי)</FormLabel>
+                    <Input type="number" {...field} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="rebooking_grace_period_minutes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>תיאום מחדש (דקות אחרי)</FormLabel>
+                    <Input type="number" {...field} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? "שומר..." : "שמור מדיניות"}
+            </Button>
+          </CardFooter>
+        </form>
+      </Form>
     </Card>
   );
 };
