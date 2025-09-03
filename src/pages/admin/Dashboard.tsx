@@ -7,7 +7,6 @@ import { RecentRequestsPreview } from "@/components/admin/RecentRequestsPreview"
 import { TodaysAgenda } from "@/components/admin/TodaysAgenda";
 import { CalendarCheck, Mail, Calendar as CalendarIcon } from "lucide-react";
 import type { Appointment } from "@/components/admin/AppointmentCard";
-import { AutoApprovalManager } from "@/components/admin/AutoApprovalManager";
 
 type Item = {
   id: string;
@@ -94,7 +93,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-center md:text-right">דשבורד ניהול</h1>
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         <DashboardStatCard title="הזמנות ממתינות" value={stats.pending} icon={Mail} isLoading={loading} linkTo="/admin/requests" linkText="עבור לאישור תורים" />
         <DashboardStatCard 
           title="תורים להיום" 
@@ -114,16 +113,13 @@ const Dashboard = () => {
           listTitle="התורים הבאים השבוע:"
           emptyStateMessage="אין תורים קרובים השבוע."
         />
-        <AutoApprovalManager isCompact={true} />
       </div>
-      {/* הזמנות */}
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <h2 className="text-2xl font-semibold mb-4 text-right">הזמנות אחרונות</h2>
-          <RecentRequestsPreview appointments={allAppointments} isLoading={loading} onUpdate={fetchData} />
+          <TodaysAgenda />
         </div>
         <div>
-          <TodaysAgenda />
+          <RecentRequestsPreview appointments={allAppointments} isLoading={loading} onUpdate={fetchData} />
         </div>
       </div>
     </div>

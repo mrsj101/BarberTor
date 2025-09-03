@@ -16,10 +16,10 @@ type Appointment = {
 };
 
 const getAgendaTitle = (date: Date): string => {
-  if (isToday(date)) return "סדר היום להיום";
-  if (isTomorrow(date)) return "סדר יום למחר";
-  if (isYesterday(date)) return "סדר יום לאתמול";
-  return `סדר יום - ${format(date, 'd MMMM', { locale: he })}`;
+  if (isToday(date)) return "התורים של היום";
+  if (isTomorrow(date)) return "התורים למחר";
+  if (isYesterday(date)) return "התורים מאתמול";
+  return `התורים ליום - ${format(date, 'd MMMM', { locale: he })}`;
 };
 
 export const TodaysAgenda = () => {
