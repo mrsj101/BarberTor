@@ -39,7 +39,7 @@ export const RecentRequestsPreview = ({ appointments, isLoading, onUpdate }: Pro
   const filterButtons: { key: FilterType; label: string }[] = [
     { key: 'all', label: 'הכל' },
     { key: 'pending', label: 'דורש טיפול' },
-    { key: 'approved', label: 'מאושרים' },
+    { key: 'approved', label: 'נקבעו' },
     { key: 'cancelled', label: 'בוטל' },
     { key: 'rejected', label: 'נדחה' },
   ];
