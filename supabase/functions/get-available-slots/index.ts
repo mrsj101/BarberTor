@@ -63,6 +63,9 @@ serve(async (req) => {
     const dayStart = startOfDay(date);
     const dayEnd = endOfDay(date);
 
+    // This is the critical query. It now fetches ALL appointments that are either
+    // 'pending' (waiting for approval) or 'approved'. This ensures that once a slot
+    // is requested, it's immediately blocked for other users.
     const { data: appointments, error: appointmentsError } = await supabaseAdmin
       .from("appointments")
       .select("start_time, end_time")
@@ -111,7 +114,6 @@ serve(async (req) => {
           return isBefore(currentTime, busySlot.end) && isAfter(slotEnd, busySlot.start);
         });
         
-        // Return a local ISO-like string (without 'Z') so the client browser interprets it in its own timezone.
         const localIsoString = currentTime.toISOString().slice(0, 19);
 
         allSlots.push({
