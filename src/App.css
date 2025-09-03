@@ -185,6 +185,14 @@
   }
 }
 
+/* --- Email Confirmed Page --- */
+.email-confirmed-icon {
+  width: 4rem;
+  height: 4rem;
+  color: #22c55e; /* Tailwind's green-500 */
+  animation: fadeInScale 0.6s ease-in-out;
+}
+
 .welcome-text-box { /* New class for the blurred box */
   background-color: rgba(255, 255, 255, 0.15); /* Semi-transparent white */
   backdrop-filter: blur(10px); /* Blur effect */
