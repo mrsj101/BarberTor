@@ -5,7 +5,7 @@ import { he } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Appointment } from "@/components/admin/AppointmentCard";
 import { CalendarToolbar } from "@/components/admin/CalendarToolbar";
-import { DailyAppointmentsList } from "@/components/admin/DailyAppointmentsList";
+import { DailyScheduleView } from "@/components/admin/DailyScheduleView";
 import type { DayContentProps } from "react-day-picker";
 
 const CalendarPage = () => {
@@ -41,13 +41,6 @@ const CalendarPage = () => {
   useEffect(() => {
     fetchAppointments();
   }, [fetchAppointments]);
-
-  const appointmentsForSelectedDay = useMemo(() => {
-    if (!selectedDate) return [];
-    return appointments.filter(app => 
-      format(new Date(app.start_time), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
-    );
-  }, [appointments, selectedDate]);
 
   const appointmentDates = useMemo(() => {
     const dates = new Map<string, { hasPending: boolean }>();
@@ -104,12 +97,7 @@ const CalendarPage = () => {
           />
         </div>
         <div className="md:col-span-2">
-          <DailyAppointmentsList
-            date={selectedDate}
-            appointments={appointmentsForSelectedDay}
-            isLoading={loading}
-            onUpdate={fetchAppointments}
-          />
+          <DailyScheduleView date={selectedDate} />
         </div>
       </div>
     </div>
