@@ -18,6 +18,7 @@ import AppointmentsManagementPage from "./pages/admin/AppointmentsManagementPage
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ClientsManagementPage from "./pages/admin/ClientsManagementPage";
 import SettingsPage from "./pages/admin/SettingsPage";
+const ServicesManagementPage = lazy(() => import("./pages/admin/ServicesManagementPage"));
 
 const App = () => {
   const { loading: authLoading } = useSession();
@@ -71,6 +72,7 @@ const App = () => {
             <Route path="requests" element={<RequestsPage />} />
             <Route path="appointments" element={<AppointmentsManagementPage />} />
             <Route path="clients" element={<ClientsManagementPage />} />
+            <Route path="services" element={<ServicesManagementPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Route>
