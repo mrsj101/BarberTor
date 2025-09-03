@@ -1,19 +1,19 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 import {
-  startOfDay,
-  endOfDay,
-  setHours,
-  setMinutes,
   isBefore,
   addMinutes,
   isAfter,
+  format,
 } from "https://esm.sh/date-fns@2.30.0";
+import { zonedTimeToUtc, utcToZonedTime } from "https://esm.sh/date-fns-tz@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const TIMEZONE = 'Asia/Jerusalem';
 
 type TimeSlot = { start: string; end: string };
 type WorkingHours = {
@@ -29,9 +29,14 @@ serve(async (req) => {
   }
 
   try {
-    const { date: dateString, serviceDuration } = await req.json();
-    // The date string is YYYY-MM-DD. Create a date object that represents the start of that day in UTC.
-    const date = new Date(`${dateString}T00:00:00.000Z`);
+    const { date: dateString, serviceDuration } = await req.json(); // dateString is YYYY-MM-DD
+
+    // --- Timezone-aware date range calculation ---
+    const dayStartLocalStr = `${dateString}T00:00:00`;
+    const dayEndLocalStr = `${dateString}T23:59:59.999`;
+    const dayStartUtc = zonedTimeToUtc(dayStartLocalStr, TIMEZONE);
+    const dayEndUtc = zonedTimeToUtc(dayEndLocalStr, TIMEZONE);
+    // ---
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -50,7 +55,11 @@ serve(async (req) => {
     const workingHours: WorkingHours = settingsData.working_hours;
     const bufferMinutes: number = settingsData.buffer_minutes;
 
-    const dayOfWeek = date.toLocaleDateString("en-US", { weekday: 'long', timeZone: 'UTC' }).toLowerCase();
+    // --- Get correct day of week for the target timezone ---
+    const localDateForDay = utcToZonedTime(new Date(dateString), TIMEZONE);
+    const dayOfWeek = format(localDateForDay, 'eeee').toLowerCase();
+    // ---
+
     const dayWorkingRanges = workingHours[dayOfWeek];
 
     if (!dayWorkingRanges || dayWorkingRanges.length === 0) {
@@ -60,24 +69,20 @@ serve(async (req) => {
       });
     }
 
-    const dayStart = startOfDay(date);
-    const dayEnd = endOfDay(date);
-
-    // This is the critical query. It now fetches ALL appointments that are either
-    // 'pending' (waiting for approval) or 'approved'. This ensures that once a slot
-    // is requested, it's immediately blocked for other users.
+    // --- Query using the correct UTC range for the local day ---
     const { data: appointments, error: appointmentsError } = await supabaseAdmin
       .from("appointments")
       .select("start_time, end_time")
       .in("status", ["pending", "approved"])
-      .gte("start_time", dayStart.toISOString())
-      .lte("start_time", dayEnd.toISOString());
+      .gte("start_time", dayStartUtc.toISOString())
+      .lte("start_time", dayEndUtc.toISOString());
 
     const { data: blocks, error: blocksError } = await supabaseAdmin
       .from("time_blocks")
       .select("start_time, end_time")
-      .gte("start_time", dayStart.toISOString())
-      .lte("start_time", dayEnd.toISOString());
+      .gte("start_time", dayStartUtc.toISOString())
+      .lte("start_time", dayEndUtc.toISOString());
+    // ---
 
     if (appointmentsError || blocksError) {
       throw new Error(`Error fetching busy times: ${appointmentsError?.message || blocksError?.message}`);
@@ -97,31 +102,32 @@ serve(async (req) => {
     const allSlots: Slot[] = [];
 
     for (const range of dayWorkingRanges) {
-      const [startHour, startMinute] = range.start.split(":").map(Number);
-      const [endHour, endMinute] = range.end.split(":").map(Number);
+      // --- Generate slots based on local time for the selected day ---
+      let currentTimeLocal = new Date(`${dateString}T${range.start}:00`);
+      const endTimeLocal = new Date(`${dateString}T${range.end}:00`);
 
-      let currentTime = setMinutes(setHours(dayStart, startHour), startMinute);
-      const endTime = setMinutes(setHours(dayStart, endHour), endMinute);
+      while (isBefore(currentTimeLocal, endTimeLocal)) {
+        const slotEndLocal = addMinutes(currentTimeLocal, serviceDuration);
 
-      while (isBefore(currentTime, endTime)) {
-        const slotEnd = addMinutes(currentTime, serviceDuration);
-
-        if (isAfter(slotEnd, endTime)) {
+        if (isAfter(slotEndLocal, endTimeLocal)) {
           break;
         }
 
+        // Convert local slot times to UTC for comparison and for returning to client
+        const slotStartUtc = zonedTimeToUtc(currentTimeLocal, TIMEZONE);
+        const slotEndUtc = zonedTimeToUtc(slotEndLocal, TIMEZONE);
+
         const isOverlapping = busySlots.some(busySlot => {
-          return isBefore(currentTime, busySlot.end) && isAfter(slotEnd, busySlot.start);
+          // busySlot start/end are already UTC Date objects
+          return isBefore(slotStartUtc, busySlot.end) && isAfter(slotEndUtc, busySlot.start);
         });
         
-        const localIsoString = currentTime.toISOString().slice(0, 19);
-
         allSlots.push({
-          time: localIsoString,
+          time: slotStartUtc.toISOString(),
           available: !isOverlapping,
         });
 
-        currentTime = addMinutes(currentTime, 15);
+        currentTimeLocal = addMinutes(currentTimeLocal, 15); // Increment by step
       }
     }
 
