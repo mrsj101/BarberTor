@@ -40,6 +40,11 @@ type RescheduleRequest = {
   };
 };
 
+type Slot = {
+  time: string;
+  available: boolean;
+};
+
 const statusMap: {
   [key in AppointmentStatus]: {
     text: string;
@@ -142,9 +147,14 @@ const RescheduleAppointment = () => {
     setAvailableSlots([]);
     
     try {
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+
       const { data, error } = await supabase.functions.invoke('get-available-slots', {
         body: {
-          date: date.toISOString(),
+          date: formattedDate,
           serviceDuration: selectedAppointment.services.duration_minutes,
         },
       });
@@ -153,7 +163,14 @@ const RescheduleAppointment = () => {
         throw error;
       }
 
-      const slots = data.map((slot: string) => new Date(slot));
+      const now = new Date();
+      const slots = (data as Slot[])
+        .filter(slot => {
+          const slotTime = new Date(slot.time);
+          return slot.available && slotTime > now;
+        })
+        .map(slot => new Date(slot.time));
+
       setAvailableSlots(slots);
 
     } catch (error) {
