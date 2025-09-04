@@ -40,6 +40,11 @@ if ("serviceWorker" in navigator) {
 
 async function initPush() {
   try {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      console.warn("Notification permission not granted");
+      return;
+    }
     const token = await getToken(messaging, {
       vapidKey: import.meta.env.VITE_VAPID_KEY,
     });
@@ -47,11 +52,12 @@ async function initPush() {
       data: { user },
     } = await supabase.auth.getUser();
     if (user) {
-      await supabase.from("device_tokens").insert({
-        user_id: user.id,
-        token,
-        platform: "web",
-      });
+      await supabase
+        .from("device_tokens")
+        .upsert(
+          { user_id: user.id, token, platform: "web" },
+          { onConflict: "token" }
+        );
     }
     onMessage(messaging, (payload) => {
       console.log("Message received", payload);
@@ -61,7 +67,17 @@ async function initPush() {
   }
 }
 
-initPush();
+supabase.auth.getSession().then(({ data: { session } }) => {
+  if (session?.user) {
+    initPush();
+  }
+});
+
+supabase.auth.onAuthStateChange((_event, session) => {
+  if (session?.user) {
+    initPush();
+  }
+});
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
