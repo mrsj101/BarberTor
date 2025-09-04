@@ -26,13 +26,13 @@ const publicUrl = getPublicUrl('BarberTor', path);
    ```bash
    npx web-push generate-vapid-keys
    ```
-3. Save the keys in your environment:
+3. Save the keys in your environment (Base64URL encoded without padding or whitespace):
    ```bash
    # .env.local
-   VITE_VAPID_PUBLIC_KEY=<public_key>
+   VITE_VAPID_PUBLIC_KEY=<base64url_public_key>
 
    # Supabase function secrets
-   VAPID_PUBLIC_KEY=<public_key>
+   VAPID_PUBLIC_KEY=<base64url_public_key>
    VAPID_PRIVATE_KEY=<private_key>
    ```
 

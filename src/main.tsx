@@ -13,6 +13,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { ensureBusinessSettings } from "@/lib/initBusinessSettings"
 
+function urlBase64ToUint8Array(base64String: string) {
+  const sanitized = base64String.replace(/\s/g, "");
+  const padding = "=".repeat((4 - (sanitized.length % 4)) % 4);
+  const base64 = (sanitized + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   integrations: [
@@ -43,9 +55,10 @@ async function initPush() {
       return;
     }
     const sw = await navigator.serviceWorker.register("/sw.js");
+    const key = urlBase64ToUint8Array(import.meta.env.VITE_VAPID_PUBLIC_KEY);
     const subscription = await sw.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
+      applicationServerKey: key,
     });
     const {
       data: { user },
