@@ -25,7 +25,7 @@ Deno.cron("daily-appointment-reminders", "0 20 * * *", async () => {
 
   const { data: appointments, error } = await supabase
     .from("appointments")
-    .select("user_id")
+    .select("id, user_id")
     .gte("start_time", start.toISOString())
     .lt("start_time", end.toISOString());
 
@@ -57,5 +57,20 @@ Deno.cron("daily-appointment-reminders", "0 20 * * *", async () => {
 
   if (fnError) {
     console.error("Error sending notifications", fnError);
+  }
+
+  const status = fnError ? "failed" : "sent";
+  const logs = (appointments || [])
+    .filter((a) => subscribedUserIds.includes(a.user_id))
+    .map((a) => ({
+      appointment_id: a.id,
+      user_id: a.user_id,
+      type: "evening",
+      status,
+      sent_at: new Date().toISOString(),
+    }));
+
+  if (logs.length > 0) {
+    await supabase.from("reminder_logs").insert(logs);
   }
 });

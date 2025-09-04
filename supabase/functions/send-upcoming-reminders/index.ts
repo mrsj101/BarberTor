@@ -77,6 +77,20 @@ Deno.cron("upcoming-appointment-reminders", "*/15 * * * *", async () => {
           if (fnError) {
             console.error("Error sending morning reminders", fnError);
           }
+
+          const status = fnError ? "failed" : "sent";
+          const logs = (appointments || [])
+            .filter((a) => subscribedUserIds.includes(a.user_id))
+            .map((a) => ({
+              appointment_id: a.id,
+              user_id: a.user_id,
+              type: "morning",
+              status,
+              sent_at: new Date().toISOString(),
+            }));
+          if (logs.length > 0) {
+            await supabase.from("reminder_logs").insert(logs);
+          }
         }
 
         const appointmentIds = (appointments || []).map((a) => a.id);
@@ -128,6 +142,20 @@ Deno.cron("upcoming-appointment-reminders", "*/15 * * * *", async () => {
 
         if (fnError) {
           console.error("Error sending three hours reminders", fnError);
+        }
+
+        const status = fnError ? "failed" : "sent";
+        const logs = (appointments || [])
+          .filter((a) => subscribedUserIds.includes(a.user_id))
+          .map((a) => ({
+            appointment_id: a.id,
+            user_id: a.user_id,
+            type: "three_hours",
+            status,
+            sent_at: new Date().toISOString(),
+          }));
+        if (logs.length > 0) {
+          await supabase.from("reminder_logs").insert(logs);
         }
       }
 
