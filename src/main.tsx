@@ -87,9 +87,9 @@ async function initPush() {
     await supabase.from('push_subscriptions').upsert({
       user_id: user?.id,
       subscription: subscription.toJSON(),
-    });
+  });
   } catch (error) {
-    console.error("Push notification setup failed", error);
+    console.warn("Push notification setup failed", error);
   }
 }
 
