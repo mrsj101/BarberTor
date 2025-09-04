@@ -58,14 +58,20 @@ export const NotificationsManager = () => {
   }, [fetchNotifications]);
 
   useEffect(() => {
-    supabase
-      .from("business_settings")
-      .select(
-        "appointment_reminders_enabled, evening_reminder_time, evening_reminder_message, morning_reminder_start_time, morning_reminder_end_time, morning_reminder_message, three_hours_reminder_time, three_hours_reminder_message"
-      )
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) return;
+    const loadSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("business_settings")
+          .select(
+            "appointment_reminders_enabled, evening_reminder_time, evening_reminder_message, morning_reminder_start_time, morning_reminder_end_time, morning_reminder_message, three_hours_reminder_time, three_hours_reminder_message"
+          )
+          .single();
+
+        if (error || !data) {
+          showError("לא הצלחנו לטעון את הגדרות התזכורות. נסה לרענן את הדף.");
+          return;
+        }
+
         setRemindersEnabled(data.appointment_reminders_enabled || false);
         setEveningTime(data.evening_reminder_time?.slice(0, 5) || "");
         setEveningMessage(data.evening_reminder_message || "");
@@ -74,7 +80,12 @@ export const NotificationsManager = () => {
         setMorningMessage(data.morning_reminder_message || "");
         setThreeHoursTime(data.three_hours_reminder_time?.slice(0, 5) || "");
         setThreeHoursMessage(data.three_hours_reminder_message || "");
-      });
+      } catch {
+        showError("לא הצלחנו לטעון את הגדרות התזכורות. נסה לרענן את הדף.");
+      }
+    };
+
+    loadSettings();
   }, []);
 
   const resetForm = () => {
