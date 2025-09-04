@@ -28,8 +28,10 @@ serve(async (req) => {
 
   for (const { id, subscription } of subscriptions ?? []) {
     try {
+      const parsedSubscription =
+        typeof subscription === "string" ? JSON.parse(subscription) : subscription;
       const res = await sendWebPush(
-        subscription,
+        parsedSubscription,
         JSON.stringify({ title, body }),
         { vapidKeys: { publicKey, privateKey } },
       );

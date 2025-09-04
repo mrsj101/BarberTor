@@ -47,12 +47,9 @@ async function initPush() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    const { endpoint, keys } = subscription.toJSON();
     await supabase.from('push_subscriptions').upsert({
       user_id: user?.id,
-      endpoint,
-      p256dh: keys.p256dh,
-      auth: keys.auth,
+      subscription: subscription.toJSON(),
     });
   } catch (error) {
     console.error("Push notification setup failed", error);
