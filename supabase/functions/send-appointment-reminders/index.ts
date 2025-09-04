@@ -34,14 +34,24 @@ Deno.cron("daily-appointment-reminders", "0 20 * * *", async () => {
     return;
   }
 
-  const userIds = Array.from(new Set((appointments || []).map(a => a.user_id)));
+  const userIds = Array.from(new Set((appointments || []).map((a) => a.user_id)));
   if (userIds.length === 0) return;
+
+  const { data: pushSubs } = await supabase
+    .from("push_subscriptions")
+    .select("user_id")
+    .in("user_id", userIds);
+
+  const subscribedUserIds = Array.from(
+    new Set((pushSubs || []).map((s) => s.user_id)),
+  );
+  if (subscribedUserIds.length === 0) return;
 
   const { error: fnError } = await supabase.functions.invoke("send-notification", {
     body: {
       title: "תזכורת לתור",
       body: "יש לך תור מחר",
-      user_ids: userIds,
+      user_ids: subscribedUserIds,
     },
   });
 
