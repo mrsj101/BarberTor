@@ -33,6 +33,10 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array | null {
     for (let i = 0; i < rawData.length; ++i) {
       outputArray[i] = rawData.charCodeAt(i);
     }
+    if (outputArray.length !== 65) {
+      console.warn("VAPID public key has invalid length");
+      return null;
+    }
     return outputArray;
   } catch (error) {
     console.warn("Failed to decode VAPID public key", error);
