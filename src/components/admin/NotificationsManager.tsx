@@ -24,6 +24,13 @@ export const NotificationsManager = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [remindersEnabled, setRemindersEnabled] = useState(false);
+  const [eveningTime, setEveningTime] = useState("");
+  const [eveningMessage, setEveningMessage] = useState("");
+  const [morningStart, setMorningStart] = useState("");
+  const [morningEnd, setMorningEnd] = useState("");
+  const [morningMessage, setMorningMessage] = useState("");
+  const [threeHoursTime, setThreeHoursTime] = useState("");
+  const [threeHoursMessage, setThreeHoursMessage] = useState("");
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
@@ -46,11 +53,20 @@ export const NotificationsManager = () => {
   useEffect(() => {
     supabase
       .from("business_settings")
-      .select("appointment_reminders_enabled")
+      .select(
+        "appointment_reminders_enabled, evening_reminder_time, evening_reminder_message, morning_reminder_start_time, morning_reminder_end_time, morning_reminder_message, three_hours_reminder_time, three_hours_reminder_message"
+      )
       .single()
       .then(({ data, error }) => {
-        if (error) return;
-        if (data) setRemindersEnabled(data.appointment_reminders_enabled || false);
+        if (error || !data) return;
+        setRemindersEnabled(data.appointment_reminders_enabled || false);
+        setEveningTime(data.evening_reminder_time?.slice(0, 5) || "");
+        setEveningMessage(data.evening_reminder_message || "");
+        setMorningStart(data.morning_reminder_start_time?.slice(0, 5) || "");
+        setMorningEnd(data.morning_reminder_end_time?.slice(0, 5) || "");
+        setMorningMessage(data.morning_reminder_message || "");
+        setThreeHoursTime(data.three_hours_reminder_time?.slice(0, 5) || "");
+        setThreeHoursMessage(data.three_hours_reminder_message || "");
       });
   }, []);
 
@@ -147,6 +163,27 @@ export const NotificationsManager = () => {
     }
   };
 
+  const saveReminderSettings = async () => {
+    const { error } = await supabase
+      .from("business_settings")
+      .update({
+        evening_reminder_time: eveningTime || null,
+        evening_reminder_message: eveningMessage || null,
+        morning_reminder_start_time: morningStart || null,
+        morning_reminder_end_time: morningEnd || null,
+        morning_reminder_message: morningMessage || null,
+        three_hours_reminder_time: threeHoursTime || null,
+        three_hours_reminder_message: threeHoursMessage || null,
+      })
+      .eq("id", 1);
+
+    if (error) {
+      showError(`שגיאה בעדכון: ${error.message}`);
+    } else {
+      showSuccess("תזכורות עודכנו");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-semibold">התראות פוש</h2>
@@ -157,6 +194,70 @@ export const NotificationsManager = () => {
           {remindersEnabled ? "תזכורות יומיות מופעלות" : "תזכורות יומיות כבויות"}
         </Label>
       </div>
+
+      {remindersEnabled && (
+        <div className="space-y-4 border rounded-md p-4">
+          <div className="space-y-2">
+            <Label>התראת ערב לפני תור</Label>
+            <div className="flex gap-2">
+              <Input
+                type="time"
+                className="w-32"
+                value={eveningTime}
+                onChange={(e) => setEveningTime(e.target.value)}
+              />
+              <Textarea
+                placeholder="תוכן התזכורת"
+                value={eveningMessage}
+                onChange={(e) => setEveningMessage(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>התראת בוקר ביום התור</Label>
+            <div className="flex gap-2 items-center">
+              <Input
+                type="time"
+                className="w-32"
+                value={morningStart}
+                onChange={(e) => setMorningStart(e.target.value)}
+              />
+              <span>-</span>
+              <Input
+                type="time"
+                className="w-32"
+                value={morningEnd}
+                onChange={(e) => setMorningEnd(e.target.value)}
+              />
+            </div>
+            <Textarea
+              placeholder="תוכן התזכורת"
+              value={morningMessage}
+              onChange={(e) => setMorningMessage(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>התראת 3 שעות לפני תור</Label>
+            <div className="flex gap-2">
+              <Input
+                type="time"
+                className="w-32"
+                value={threeHoursTime}
+                onChange={(e) => setThreeHoursTime(e.target.value)}
+              />
+              <Textarea
+                placeholder="תוכן התזכורת"
+                value={threeHoursMessage}
+                onChange={(e) => setThreeHoursMessage(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <Button onClick={saveReminderSettings}>שמור תזכורות</Button>
+        </div>
+      )}
 
       <Input placeholder="כותרת" value={title} onChange={(e) => setTitle(e.target.value)} />
       <Textarea placeholder="תוכן" value={body} onChange={(e) => setBody(e.target.value)} />
