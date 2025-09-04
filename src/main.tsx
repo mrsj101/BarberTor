@@ -10,6 +10,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner"
 import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { messaging } from "@/integrations/firebase/client"
+import { supabase } from "@/integrations/supabase/client"
+import { getToken, onMessage } from "firebase/messaging"
 
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
@@ -30,6 +33,35 @@ Sentry.init({
 });
 
 const queryClient = new QueryClient();
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/firebase-messaging-sw.js");
+}
+
+async function initPush() {
+  try {
+    const token = await getToken(messaging, {
+      vapidKey: import.meta.env.VITE_VAPID_KEY,
+    });
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("device_tokens").insert({
+        user_id: user.id,
+        token,
+        platform: "web",
+      });
+    }
+    onMessage(messaging, (payload) => {
+      console.log("Message received", payload);
+    });
+  } catch (error) {
+    console.error("Push notification setup failed", error);
+  }
+}
+
+initPush();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
