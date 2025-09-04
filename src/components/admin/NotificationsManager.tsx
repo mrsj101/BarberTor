@@ -159,8 +159,7 @@ export const NotificationsManager = () => {
     setRemindersEnabled(checked);
     const { error } = await supabase
       .from("business_settings")
-      .update({ appointment_reminders_enabled: checked })
-      .eq("id", 1);
+      .upsert({ id: 1, appointment_reminders_enabled: checked });
 
     if (error) {
       setRemindersEnabled(!checked);
@@ -173,7 +172,8 @@ export const NotificationsManager = () => {
   const saveReminderSettings = async () => {
     const { error } = await supabase
       .from("business_settings")
-      .update({
+      .upsert({
+        id: 1,
         evening_reminder_time: eveningTime || null,
         evening_reminder_message: eveningMessage || null,
         morning_reminder_start_time: morningStart || null,
@@ -181,8 +181,7 @@ export const NotificationsManager = () => {
         morning_reminder_message: morningMessage || null,
         three_hours_reminder_time: threeHoursTime || null,
         three_hours_reminder_message: threeHoursMessage || null,
-      })
-      .eq("id", 1);
+      });
 
     if (error) {
       showError(`שגיאה בעדכון: ${error.message}`);

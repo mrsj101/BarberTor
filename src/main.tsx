@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
+import { ensureBusinessSettings } from "@/lib/initBusinessSettings"
 
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
@@ -31,6 +32,8 @@ Sentry.init({
 });
 
 const queryClient = new QueryClient();
+
+ensureBusinessSettings();
 
 async function initPush() {
   try {
