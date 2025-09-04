@@ -4,6 +4,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { showError, showSuccess } from "@/utils/toast";
 
@@ -196,64 +203,99 @@ export const NotificationsManager = () => {
       </div>
 
       {remindersEnabled && (
-        <div className="space-y-4 border rounded-md p-4">
-          <div className="space-y-2">
-            <Label>התראת ערב לפני תור</Label>
-            <div className="flex gap-2">
-              <Input
-                type="time"
-                className="w-32"
-                value={eveningTime}
-                onChange={(e) => setEveningTime(e.target.value)}
-              />
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>תזכורת ערב לפני תור</CardTitle>
+              <CardDescription>תזכורת שתישלח בערב שלפני מועד התור.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="evening-time" className="w-24">שעת שליחה</Label>
+                <Input
+                  id="evening-time"
+                  type="time"
+                  className="w-32"
+                  placeholder="בחר שעה"
+                  value={eveningTime}
+                  onChange={(e) => setEveningTime(e.target.value)}
+                />
+              </div>
               <Textarea
-                placeholder="תוכן התזכורת"
+                placeholder="ההודעה שתישלח בערב לפני התור"
                 value={eveningMessage}
                 onChange={(e) => setEveningMessage(e.target.value)}
               />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="space-y-2">
-            <Label>התראת בוקר ביום התור</Label>
-            <div className="flex gap-2 items-center">
-              <Input
-                type="time"
-                className="w-32"
-                value={morningStart}
-                onChange={(e) => setMorningStart(e.target.value)}
-              />
-              <span>-</span>
-              <Input
-                type="time"
-                className="w-32"
-                value={morningEnd}
-                onChange={(e) => setMorningEnd(e.target.value)}
-              />
-            </div>
-            <Textarea
-              placeholder="תוכן התזכורת"
-              value={morningMessage}
-              onChange={(e) => setMorningMessage(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>התראת 3 שעות לפני תור</Label>
-            <div className="flex gap-2">
-              <Input
-                type="time"
-                className="w-32"
-                value={threeHoursTime}
-                onChange={(e) => setThreeHoursTime(e.target.value)}
-              />
+          <Card>
+            <CardHeader>
+              <CardTitle>תזכורת בוקר ביום התור</CardTitle>
+              <CardDescription>
+                הודעה שתישלח בבוקר יום התור בין השעות שייבחרו.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="morning-start">החל מ</Label>
+                  <Input
+                    id="morning-start"
+                    type="time"
+                    className="w-32"
+                    placeholder="שעה"
+                    value={morningStart}
+                    onChange={(e) => setMorningStart(e.target.value)}
+                  />
+                </div>
+                <span>-</span>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="morning-end">עד</Label>
+                  <Input
+                    id="morning-end"
+                    type="time"
+                    className="w-32"
+                    placeholder="שעה"
+                    value={morningEnd}
+                    onChange={(e) => setMorningEnd(e.target.value)}
+                  />
+                </div>
+              </div>
               <Textarea
-                placeholder="תוכן התזכורת"
+                placeholder="ההודעה שתישלח בבוקר יום התור"
+                value={morningMessage}
+                onChange={(e) => setMorningMessage(e.target.value)}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>תזכורת 3 שעות לפני תור</CardTitle>
+              <CardDescription>
+                הודעה שתישלח שלוש שעות לפני מועד התור.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="three-hours-time" className="w-24">שעת שליחה</Label>
+                <Input
+                  id="three-hours-time"
+                  type="time"
+                  className="w-32"
+                  placeholder="בחר שעה"
+                  value={threeHoursTime}
+                  onChange={(e) => setThreeHoursTime(e.target.value)}
+                />
+              </div>
+              <Textarea
+                placeholder="ההודעה שתישלח שלוש שעות לפני התור"
                 value={threeHoursMessage}
                 onChange={(e) => setThreeHoursMessage(e.target.value)}
               />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           <Button onClick={saveReminderSettings}>שמור תזכורות</Button>
         </div>
