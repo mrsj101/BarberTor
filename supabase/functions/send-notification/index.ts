@@ -18,8 +18,12 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  const publicKey = Deno.env.get("VAPID_PUBLIC_KEY")!;
-  const privateKey = Deno.env.get("VAPID_PRIVATE_KEY")!;
+  const publicKey =
+    Deno.env.get("VAPID_PUBLIC_KEY") ??
+    "BMb9VLgPMo1ZY3H6bWhFvXzdLoRCEGcRtKVp-pl6LtgO2kb0geStTV1egKGs4jl4Wjln5SJd4ejNsU4MZWa89_k";
+  const privateKey =
+    Deno.env.get("VAPID_PRIVATE_KEY") ??
+    "xTK3t6bOjZHyzMl3U3jzHaqwuE18uYF0rVz7f8fPs_Y";
 
   const { data: subscriptions } = await supabase
     .from("push_subscriptions")

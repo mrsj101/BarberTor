@@ -29,11 +29,11 @@ const publicUrl = getPublicUrl('BarberTor', path);
 3. Save the keys in your environment (Base64URL encoded without padding or whitespace):
    ```bash
    # .env.local
-   VITE_VAPID_PUBLIC_KEY=<base64url_public_key>
+   VITE_VAPID_PUBLIC_KEY=BMb9VLgPMo1ZY3H6bWhFvXzdLoRCEGcRtKVp-pl6LtgO2kb0geStTV1egKGs4jl4Wjln5SJd4ejNsU4MZWa89_k
 
    # Supabase function secrets
-   VAPID_PUBLIC_KEY=<base64url_public_key>
-   VAPID_PRIVATE_KEY=<private_key>
+   VAPID_PUBLIC_KEY=BMb9VLgPMo1ZY3H6bWhFvXzdLoRCEGcRtKVp-pl6LtgO2kb0geStTV1egKGs4jl4Wjln5SJd4ejNsU4MZWa89_k
+   VAPID_PRIVATE_KEY=xTK3t6bOjZHyzMl3U3jzHaqwuE18uYF0rVz7f8fPs_Y
    ```
 
 ### Database setup

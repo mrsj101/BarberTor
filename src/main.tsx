@@ -19,7 +19,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array | null {
     return null;
   }
 
-  const sanitized = base64String.replace(/\s/g, "");
+  const sanitized = base64String.replace(/[^A-Za-z0-9-_]/g, "");
   const padding = "=".repeat((4 - (sanitized.length % 4)) % 4);
   const base64 = (sanitized + padding).replace(/-/g, "+").replace(/_/g, "/");
 
@@ -72,7 +72,10 @@ async function initPush() {
       return;
     }
     const sw = await navigator.serviceWorker.register("/sw.js");
-    const key = urlBase64ToUint8Array(import.meta.env.VITE_VAPID_PUBLIC_KEY);
+    const vapidKey =
+      import.meta.env.VITE_VAPID_PUBLIC_KEY ??
+      "BMb9VLgPMo1ZY3H6bWhFvXzdLoRCEGcRtKVp-pl6LtgO2kb0geStTV1egKGs4jl4Wjln5SJd4ejNsU4MZWa89_k";
+    const key = urlBase64ToUint8Array(vapidKey);
     if (!key) {
       console.warn("Invalid VAPID key; skipping push subscription");
       return;
