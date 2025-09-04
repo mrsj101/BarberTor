@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showError, showSuccess } from "@/utils/toast";
 
 interface NotificationSetting {
   id: string;
@@ -12,7 +12,7 @@ interface NotificationSetting {
   user_ids: string[];
 }
 
-export function NotificationsManager() {
+export const NotificationsManager = () => {
   const [notifications, setNotifications] = useState<NotificationSetting[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,20 +21,18 @@ export function NotificationsManager() {
   const [userIds, setUserIds] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const { toast } = useToast();
-
   const fetchNotifications = useCallback(async () => {
     const { data, error } = await supabase
       .from("notification_settings")
       .select("*")
       .order("created_at", { ascending: false });
     if (error) {
-      toast({ title: "שגיאה בטעינה", description: error.message, variant: "destructive" });
+      showError(`שגיאה בטעינה: ${error.message}`);
     } else {
       setNotifications(data ?? []);
     }
     setLoading(false);
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchNotifications();
@@ -66,9 +64,9 @@ export function NotificationsManager() {
     }
 
     if (error) {
-      toast({ title: "שגיאה בשמירה", description: error.message, variant: "destructive" });
+      showError(`שגיאה בשמירה: ${error.message}`);
     } else {
-      toast({ title: editingId ? "התראה עודכנה" : "התראה נוצרה" });
+      showSuccess(editingId ? "התראה עודכנה" : "התראה נוצרה");
       resetForm();
       fetchNotifications();
     }
@@ -87,9 +85,9 @@ export function NotificationsManager() {
       .delete()
       .eq("id", id);
     if (error) {
-      toast({ title: "שגיאה במחיקה", description: error.message, variant: "destructive" });
+      showError(`שגיאה במחיקה: ${error.message}`);
     } else {
-      toast({ title: "התראה נמחקה" });
+      showSuccess("התראה נמחקה");
       fetchNotifications();
     }
   };
@@ -99,9 +97,9 @@ export function NotificationsManager() {
       body: { title: n.title, body: n.body, user_ids: n.user_ids },
     });
     if (error) {
-      toast({ title: "שגיאה בשליחה", description: error.message, variant: "destructive" });
+      showError(`שגיאה בשליחה: ${error.message}`);
     } else {
-      toast({ title: "נשלח" });
+      showSuccess("נשלח");
     }
   };
 
@@ -149,4 +147,4 @@ export function NotificationsManager() {
       </div>
     </div>
   );
-}
+};
