@@ -167,12 +167,15 @@ export const NotificationsManager = () => {
       />
 
       <div className="space-x-2">
-        <Button onClick={saveNotification}>{editingId ? "עדכן התראה" : "צור התראה"}</Button>
+        <Button onClick={saveNotification}>
+          {editingId ? "עדכן התראה" : "צור התראה"}
+        </Button>
         {editingId && (
           <Button variant="outline" onClick={resetForm}>
             ביטול
           </Button>
         )}
+        <Button onClick={() => sendNotification()}>שלח התראה</Button>
       </div>
 
       <div className="space-y-2">
@@ -203,19 +206,6 @@ export const NotificationsManager = () => {
           ))
         )}
       </div>
-
-      <div className="flex gap-2">
-        <Button onClick={saveNotification}>שמור התראה</Button>
-        <Button onClick={() => sendNotification()}>שלח התראה</Button>
-      </div>
-
-      {notifications.length > 0 && (
-        <ul className="list-disc pr-5 space-y-1">
-          {notifications.map((n) => (
-            <li key={n.id}>{n.title}</li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 };
