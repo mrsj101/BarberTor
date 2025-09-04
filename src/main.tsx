@@ -44,9 +44,16 @@ async function initPush() {
       userVisibleOnly: true,
       applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
     });
-    await supabase
-      .from("push_subscriptions")
-      .upsert({ subscription: subscription.toJSON() });
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const { endpoint, keys } = subscription.toJSON();
+    await supabase.from('push_subscriptions').upsert({
+      user_id: user?.id,
+      endpoint,
+      p256dh: keys.p256dh,
+      auth: keys.auth,
+    });
   } catch (error) {
     console.error("Push notification setup failed", error);
   }
