@@ -1,18 +1,70 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showError, showSuccess } from "@/utils/toast";
+
+type Notification = {
+  id?: number;
+  title: string;
+  body: string;
+};
 
 export function NotificationsManager() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [userIds, setUserIds] = useState("");
   const [remindersEnabled, setRemindersEnabled] = useState(false);
-  const { toast } = useToast();
+
+  const fetchNotifications = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("id, title, body")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      showError("שגיאה בטעינת ההתראות.");
+    } else {
+      setNotifications(data || []);
+    }
+  }, []);
+
+  const saveNotification = useCallback(async () => {
+    const { error } = await supabase.from("notifications").insert({ title, body });
+
+    if (error) {
+      showError(`שגיאה בשמירת ההתראה: ${error.message}`);
+    } else {
+      showSuccess("התראה נשמרה בהצלחה");
+      setTitle("");
+      setBody("");
+      setUserIds("");
+      fetchNotifications();
+    }
+  }, [title, body, fetchNotifications]);
+
+  const sendNotification = useCallback(async () => {
+    const ids = userIds
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+    const { error } = await supabase.functions.invoke("send-notification", {
+      body: { title, body, user_ids: ids },
+    });
+    if (error) {
+      showError(`שגיאה בשליחה: ${error.message}`);
+    } else {
+      showSuccess("ההתראה נשלחה");
+    }
+  }, [title, body, userIds]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   useEffect(() => {
     supabase
@@ -33,27 +85,9 @@ export function NotificationsManager() {
 
     if (error) {
       setRemindersEnabled(!checked);
-      toast({ title: "שגיאה בעדכון", description: error.message, variant: "destructive" });
+      showError(`שגיאה בעדכון: ${error.message}`);
     } else {
-      toast({ title: checked ? "תזכורות הופעלו" : "תזכורות כובו" });
-    }
-  };
-
-  const send = async () => {
-    const ids = userIds
-      .split(",")
-      .map((id) => id.trim())
-      .filter(Boolean);
-    const { error } = await supabase.functions.invoke("send-notification", {
-      body: { title, body, user_ids: ids },
-    });
-    if (error) {
-      toast({ title: "שגיאה בשליחה", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "נשלח" });
-      setTitle("");
-      setBody("");
-      setUserIds("");
+      showSuccess(checked ? "תזכורות הופעלו" : "תזכורות כובו");
     }
   };
 
@@ -73,7 +107,17 @@ export function NotificationsManager() {
         value={userIds}
         onChange={(e) => setUserIds(e.target.value)}
       />
-      <Button onClick={send}>שלח התראה</Button>
+      <div className="flex gap-2">
+        <Button onClick={saveNotification}>שמור התראה</Button>
+        <Button onClick={sendNotification}>שלח התראה</Button>
+      </div>
+      {notifications.length > 0 && (
+        <ul className="list-disc pr-5 space-y-1">
+          {notifications.map((n) => (
+            <li key={n.id}>{n.title}</li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
