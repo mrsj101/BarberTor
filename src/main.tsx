@@ -20,6 +20,10 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array | null {
   }
 
   const sanitized = base64String.replace(/[^A-Za-z0-9-_]/g, "");
+  if (sanitized.length % 4 === 1) {
+    console.warn("VAPID public key is invalid");
+    return null;
+  }
   const padding = "=".repeat((4 - (sanitized.length % 4)) % 4);
   const base64 = (sanitized + padding).replace(/-/g, "+").replace(/_/g, "/");
 
@@ -65,6 +69,16 @@ async function initPush() {
     return;
   }
   pushInitAttempted = true;
+
+  const vapidKey =
+    import.meta.env.VITE_VAPID_PUBLIC_KEY ??
+    "BMb9VLgPMo1ZY3H6bWhFvXzdLoRCEGcRtKVp-pl6LtgO2kb0geStTV1egKGs4jl4Wjln5SJd4ejNsU4MZWa89_k";
+  const key = urlBase64ToUint8Array(vapidKey);
+  if (!key) {
+    console.warn("Invalid VAPID key; skipping push subscription");
+    return;
+  }
+
   try {
     const permission = await Notification.requestPermission();
     if (permission !== "granted") {
@@ -72,14 +86,6 @@ async function initPush() {
       return;
     }
     const sw = await navigator.serviceWorker.register("/sw.js");
-    const vapidKey =
-      import.meta.env.VITE_VAPID_PUBLIC_KEY ??
-      "BMb9VLgPMo1ZY3H6bWhFvXzdLoRCEGcRtKVp-pl6LtgO2kb0geStTV1egKGs4jl4Wjln5SJd4ejNsU4MZWa89_k";
-    const key = urlBase64ToUint8Array(vapidKey);
-    if (!key) {
-      console.warn("Invalid VAPID key; skipping push subscription");
-      return;
-    }
     const subscription = await sw.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: key,
