@@ -95,9 +95,8 @@ const BookAppointment = () => {
       showSuccess(autoApprove ? "התור נקבע ואושר בהצלחה!" : "התור נקבע בהצלחה וממתין לאישור");
       navigate("/");
 
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      showError(`שגיאה בקביעת התור: ${message}`);
+    } catch (error: any) {
+      showError(`שגיאה בקביעת התור: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }

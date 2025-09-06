@@ -48,7 +48,7 @@ export const AppointmentActions = ({ appointment, onUpdate }: Props) => {
   const [isCancelOpen, setIsCancelOpen] = useState(false);
 
   const handleStatusChange = async (
-    newStatus: keyof typeof statusText
+    newStatus: AppointmentWithDetails['status']
   ) => {
     const { error } = await supabase
       .from("appointments")
@@ -125,10 +125,10 @@ export const AppointmentActions = ({ appointment, onUpdate }: Props) => {
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
-                {(Object.keys(statusText) as Array<keyof typeof statusText>).map((statusKey) => (
+                {Object.keys(statusText).map((statusKey) => (
                   <DropdownMenuItem
                     key={statusKey}
-                    onClick={() => handleStatusChange(statusKey)}
+                    onClick={() => handleStatusChange(statusKey as any)}
                   >
                     {statusText[statusKey]}
                   </DropdownMenuItem>
