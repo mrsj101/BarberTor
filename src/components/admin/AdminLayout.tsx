@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Calendar, Mail, Menu, X, LogOut, ListTodo, Users, Settings, Scissors, Bell } from "lucide-react";
+import { LayoutDashboard, Calendar, Mail, Menu, X, LogOut, ListTodo, Users, Settings, Scissors } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/contexts/SessionContext";
@@ -12,7 +12,6 @@ const navItems = [
   { href: "/admin/appointments", label: "ניהול תורים", icon: ListTodo },
   { href: "/admin/clients", label: "ניהול לקוחות", icon: Users },
   { href: "/admin/services", label: "ניהול שירותים", icon: Scissors },
-  { href: "/admin/reminder-logs", label: "לוג תזכורות", icon: Bell },
   { href: "/admin/settings", label: "הגדרות", icon: Settings },
 ];
 

@@ -95,7 +95,8 @@ export const BusinessHoursManager = () => {
     setIsSaving(true);
     const { error } = await supabase
       .from("business_settings")
-      .upsert({ id: 1, working_hours: workingHours });
+      .update({ working_hours: workingHours })
+      .eq("id", 1);
 
     if (error) {
       showError(`שגיאה בשמירת ההגדרות: ${error.message}`);

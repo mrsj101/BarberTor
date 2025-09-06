@@ -1,7 +1,6 @@
 import { BusinessHoursManager } from "@/components/admin/BusinessHoursManager";
 import { AutoApprovalManager } from "@/components/admin/AutoApprovalManager";
 import { PolicyManager } from "@/components/admin/PolicyManager";
-import { NotificationsManager } from "@/components/admin/NotificationsManager";
 
 const SettingsPage = () => {
   return (
@@ -10,7 +9,6 @@ const SettingsPage = () => {
       <AutoApprovalManager />
       <PolicyManager />
       <BusinessHoursManager />
-      <NotificationsManager />
     </div>
   );
 };
