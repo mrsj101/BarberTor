@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import BookAppointment from "./pages/client/BookAppointment";
 import RebookAppointment from "./pages/client/RebookAppointment";
 import CancelAppointment from "./pages/client/CancelAppointment";
+const MessagesPage = lazy(() => import("./pages/client/MessagesPage"));
 import AdminLayout from "./components/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import CalendarPage from "./pages/admin/CalendarPage";
@@ -20,6 +21,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ClientsManagementPage from "./pages/admin/ClientsManagementPage";
 import SettingsPage from "./pages/admin/SettingsPage";
 const ServicesManagementPage = lazy(() => import("./pages/admin/ServicesManagementPage"));
+const AdminMessagesPage = lazy(() => import("./pages/admin/MessagesPage"));
 
 const App = () => {
   const { loading: authLoading } = useSession();
@@ -65,9 +67,10 @@ const App = () => {
           <Route path="/book" element={<BookAppointment />} />
           <Route path="/rebook" element={<RebookAppointment />} />
           <Route path="/cancel" element={<CancelAppointment />} />
-          
+          <Route path="/messages" element={<MessagesPage />} />
+
           {/* Protected Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route path="/admin" element={<AdminLayout />}> 
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="calendar" element={<CalendarPage />} />
@@ -76,6 +79,7 @@ const App = () => {
             <Route path="clients" element={<ClientsManagementPage />} />
             <Route path="services" element={<ServicesManagementPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="messages" element={<AdminMessagesPage />} />
           </Route>
         </Route>
 

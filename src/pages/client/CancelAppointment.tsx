@@ -57,7 +57,7 @@ const CancelAppointment = () => {
         graceMinutes: settingsData?.cancellation_grace_period_minutes || 30,
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       showError("שגיאה בטעינת התורים שלך.");
     } finally {
       setLoading(false);
@@ -80,8 +80,9 @@ const CancelAppointment = () => {
 
       showSuccess("התור בוטל בהצלחה.");
       fetchData(); // Refresh the list
-    } catch (error: any) {
-      showError(`שגיאה בביטול התור: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      showError(`שגיאה בביטול התור: ${message}`);
     } finally {
       setCancellingId(null);
     }
