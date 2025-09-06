@@ -81,7 +81,7 @@ const RebookAppointment = () => {
         graceMinutes: settingsData?.rebooking_grace_period_minutes || 30,
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       showError("שגיאה בטעינת התור שלך.");
     } finally {
       setLoading(false);
@@ -167,8 +167,9 @@ const RebookAppointment = () => {
       showSuccess(autoApprove ? "התור תואם מחדש ואושר בהצלחה!" : "התור תואם מחדש וממתין לאישור");
       navigate("/");
 
-    } catch (error: any) {
-      showError(`שגיאה בתיאום התור מחדש: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      showError(`שגיאה בתיאום התור מחדש: ${message}`);
       fetchData();
     } finally {
       setIsRebooking(false);
