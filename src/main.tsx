@@ -47,8 +47,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 )
 
-// Register a unified service worker for FCM and Web Push once the app loads
-if ('serviceWorker' in navigator) {
+// Register a unified service worker for FCM and Web Push in production
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/custom-sw.js');
   });

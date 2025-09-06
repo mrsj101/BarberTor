@@ -80,6 +80,7 @@ serve(async (req) => {
           });
           results.push({ id: sub.id, status: 'sent' });
         } catch (e: unknown) {
+          console.error('Push send failed', e);
           await supabaseAdmin.from('notifications').insert({
             user_id: sub.user_id,
             title,
@@ -97,6 +98,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err: unknown) {
+    console.error('send-notification error', err);
     return new Response(JSON.stringify({ error: String(err) }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

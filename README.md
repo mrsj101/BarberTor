@@ -1,5 +1,8 @@
 # Welcome to your Dyad app
 
+This project is a PWA for managing barbershop appointments built with React, Vite and Supabase.
+The sections below outline storage usage and the new cross-platform messaging setup.
+
 ## Supabase Storage
 
 Uploaded files are stored in the `BarberTor` bucket on Supabase Storage.
