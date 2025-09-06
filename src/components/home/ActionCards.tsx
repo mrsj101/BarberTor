@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { CalendarPlus, CalendarClock, CalendarX, Bell } from "lucide-react";
+import { CalendarPlus, CalendarClock, CalendarX } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const actions = [
@@ -17,11 +17,6 @@ const actions = [
     title: "ביטול תור",
     icon: <CalendarX className="w-10 h-10 text-primary mb-2" />,
     href: "/cancel",
-  },
-  {
-    title: "הודעות",
-    icon: <Bell className="w-10 h-10 text-primary mb-2" />,
-    href: "/messages",
   },
 ];
 
